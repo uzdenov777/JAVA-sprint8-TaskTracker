@@ -8,7 +8,10 @@ import java.io.File;
 
 public class Managers {
 
-    public static TaskManager getDefault() {
+    public static HttpTaskManager getDefault() {
+        return new HttpTaskManager("http://localhost:8080");
+    }
+    public static TaskManager getInMemoryTaskManager() {
         return new InMemoryTaskManager();
     }
 
@@ -16,7 +19,7 @@ public class Managers {
         return new InMemoryHistoryManager();
     }
 
-    public static TaskManager getFileBackedTasksManager(File saveFile) {
+    public static TaskManager getFileBackedTasksManager(String saveFile) {
         return new FileBackedTasksManager(saveFile);
     }
 

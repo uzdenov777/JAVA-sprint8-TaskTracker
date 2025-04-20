@@ -16,10 +16,9 @@ public class Task {
     protected final int id;
     protected final TypeTask type;
 
-
     protected LocalDateTime startTime;
     protected Duration duration;
-    protected DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
+    protected static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
 
     public Task(String name, String description, int id, StatusTask status, TypeTask type, String startTime, long duration) {
         this.name = name;
@@ -104,6 +103,7 @@ public class Task {
     public StatusTask getStatus() {
         return status;
     }
+
 
     public void setStatus(StatusTask status) {
         this.status = status;

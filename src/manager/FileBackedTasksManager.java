@@ -13,14 +13,22 @@ import java.util.*;
 
 public class FileBackedTasksManager extends InMemoryTaskManager {
 
-    private final File saveFile;
+    private String saveFile;
 
-    public FileBackedTasksManager(File saveFile) {
+    public FileBackedTasksManager(String saveFile) {
         super();
         this.saveFile = saveFile;
     }
 
+    public FileBackedTasksManager() {
+        super();
+    }
+
     private void save() {
+        if (saveFile == null) {
+            return;
+        }
+
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(saveFile))) {
             writer.write("id,type,name,status,description,startTime,duration,epic\n");
 
@@ -116,7 +124,7 @@ public class FileBackedTasksManager extends InMemoryTaskManager {
         return resultBuilder.toString();
     }
 
-    public static FileBackedTasksManager loadFromFile(File readerFile, File newWriterFile) {
+    public static FileBackedTasksManager loadFromFile(String readerFile, String newWriterFile) {
         FileBackedTasksManager manager;
         ArrayList<String> readTasksFromFile = new ArrayList<>();
 

@@ -18,11 +18,11 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class FileBackedTasksManagerTest extends TaskManagerTest<FileBackedTasksManager> {
 
-    File readerFile = new File("saveFile1.txt");
+    String nameReaderFile = "saveFile1.txt";
 
     @Override
     public FileBackedTasksManager createTaskManager() {
-        return new FileBackedTasksManager(readerFile);
+        return new FileBackedTasksManager(nameReaderFile);
     }
 
     @Test
@@ -39,8 +39,8 @@ public class FileBackedTasksManagerTest extends TaskManagerTest<FileBackedTasksM
         List<Task> allTasksEpicsSubtasks = manager.getAllTasksEpicSubtask();
         assertTrue(allTasksEpicsSubtasks.isEmpty());
 
-        File writerFile = new File("writerFile.txt");
-        FileBackedTasksManager taskManager = FileBackedTasksManager.loadFromFile(readerFile, writerFile);
+        String writerFile = "writerFile.txt";
+        FileBackedTasksManager taskManager = FileBackedTasksManager.loadFromFile(nameReaderFile, writerFile);
         List<Task> allTasksEpicsSubtasks2 = taskManager.getAllTasksEpicSubtask();
         assertTrue(allTasksEpicsSubtasks2.isEmpty());
     }
@@ -70,8 +70,8 @@ public class FileBackedTasksManagerTest extends TaskManagerTest<FileBackedTasksM
         List<Task> getHistory1 = manager.getHistory();
         assertFalse(getHistory1.isEmpty());
 
-        File writerFile = new File("writerFile.txt");
-        FileBackedTasksManager taskManager = FileBackedTasksManager.loadFromFile(readerFile, writerFile);
+        String writerFile = "writerFile.txt";
+        FileBackedTasksManager taskManager = FileBackedTasksManager.loadFromFile(nameReaderFile, "writerFile.txt");
         List<Task> allTasksEpicsSubtasks2 = taskManager.getAllTasksEpicSubtask();
         assertFalse(allTasksEpicsSubtasks2.isEmpty());
 
@@ -109,8 +109,8 @@ public class FileBackedTasksManagerTest extends TaskManagerTest<FileBackedTasksM
         List<Task> getHistory1 = manager.getHistory();
         assertTrue(getHistory1.isEmpty());
 
-        File writerFile = new File("writerFile.txt");
-        FileBackedTasksManager taskManager = FileBackedTasksManager.loadFromFile(readerFile, writerFile);
+        String writerFile = "writerFile.txt";
+        FileBackedTasksManager taskManager = FileBackedTasksManager.loadFromFile(nameReaderFile, writerFile);
         List<Task> allTasksEpicsSubtasks2 = taskManager.getAllTasksEpicSubtask();
         assertFalse(allTasksEpicsSubtasks2.isEmpty());
 
