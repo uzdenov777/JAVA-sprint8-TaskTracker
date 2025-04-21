@@ -121,38 +121,38 @@ public class InMemoryTaskManager implements TaskManager {
 
     @Override
     public Optional<Task> getTask(int id) { //Получение Task по идентификатору.
+        Task task = tasks.get(id);
 
-        if (tasks.containsKey(id)) { //Проверяет если такой ID в задачах.
-            Task task = tasks.get(id);
+        if (Objects.nonNull(task)) { //Проверяет если такой ID в задачах.
             historyManager.add(task);
         } else {
             System.out.println("Не существует такого ID:" + id + " Task");
         }
-        return Optional.ofNullable(tasks.get(id));
+        return Optional.ofNullable(task);
     }
 
     @Override
     public Optional<Epic> getEpic(int id) { //Получение Epic по идентификатору.
+        Epic epic = epics.get(id);
 
-        if (epics.containsKey(id)) { //Проверяет если такой ID в Epic.
-            Epic epic = epics.get(id);
+        if (Objects.nonNull(epic)) { //Проверяет если такой ID в Epic.
             historyManager.add(epic);
         } else {
             System.out.println("Не существует такого ID:" + id + " Epic");
         }
-        return Optional.ofNullable(epics.get(id));
+        return Optional.ofNullable(epic);
     }
 
     @Override
     public Optional<Subtask> getSubtask(int id) { //Получение Subtask по идентификатору.
+        Subtask subtask = subtasks.get(id);
 
-        if (subtasks.containsKey(id)) { //Проверяет если такой ID в подзадачах.
-            Subtask subtask = subtasks.get(id);
+        if (Objects.nonNull(subtask)) { //Проверяет если такой ID в подзадачах.
             historyManager.add(subtask);
         } else {
             System.out.println("Не существует такого ID:" + id + " Subtask");
         }
-        return Optional.ofNullable(subtasks.get(id));
+        return Optional.ofNullable(subtask);
     }
 
     @Override
@@ -423,6 +423,12 @@ public class InMemoryTaskManager implements TaskManager {
 
         System.out.println("Такого Epic нету");
         return new HashMap<>();
+    }
+
+    @Override
+    public List<Subtask> getListSubtasksByEpicId(int id) {
+        Map<Integer, Subtask> epicSubtasks = getMapSubtasksByEpicId(id);
+        return new ArrayList<>(epicSubtasks.values());
     }
 
     @Override
