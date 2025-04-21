@@ -563,38 +563,4 @@ public class HttpTaskServer {
     private String generateApiToken() {
         return "" + System.currentTimeMillis();
     }
-
-    public static void main(String[] args) throws IOException {
-        HttpTaskServer server = new HttpTaskServer();
-        server.start();
-        Gson gson1 = CreateGson.createGson();
-        Task task = new Task("task", "task1task1", 22, StatusTask.NEW, TypeTask.TASK, "21.03.2025 12:00", 50);
-//        Task task1 = new Task("tas2", "task1task2", 2, StatusTask.NEW, TypeTask.TASK, "21.03.2025 12:00", 50);
-//        Task task2 = new Task("tas3", "task1task3", 12, StatusTask.NEW, TypeTask.TASK, "21.03.2025 12:00", 50);
-        Epic epic = new Epic("epic1", "epic1epic1", 18, StatusTask.NEW, TypeTask.EPIC);
-        Subtask subtask1 = new Subtask("subtask1", "subtask1subtask1", 119, StatusTask.NEW, epic.getId(), TypeTask.SUBTASK, "24.03.2025 12:00", 1);
-        String s = gson1.toJson(task);
-        String s2 = gson1.toJson(epic);
-        String s3 = gson1.toJson(subtask1);
-
-        System.out.println(s);
-        System.out.println(s2);
-        System.out.println(s3);
-//
-//        List<Task> list = new ArrayList<>();
-//        list.add(task);
-//        list.add(task1);
-//        list.add(task2);
-//        list.add(epic);
-//        list.add(subtask1);
-//
-//        String string = gson1.toJson(list);
-//        System.out.println(string);
-//
-//        List<Task> tasks = gson1.fromJson(string, new TypeToken<List<Task>>() {}.getType());
-//        System.out.println(tasks);
-//        Epic epic1 = (Epic) tasks.get(4);
-//        Task taskss= tasks.get(4);
-
-    }
 }
