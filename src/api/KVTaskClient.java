@@ -1,33 +1,31 @@
 package api;
 
-import com.google.gson.Gson;
-import model.Task;
-
+import java.io.IOException;
 import java.net.URI;
-import java.net.URL;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 
 
 public class KVTaskClient {
-    private final String url;
+    private final String kvServerUrl;
     private final HttpClient httpClient;
     private String apiTokenServer;
-    private Gson gson;
 
-    public KVTaskClient() {
-        url = "http://localhost:8080";
-        httpClient = HttpClient.newHttpClient();
-        gson = new Gson();
+    public KVTaskClient(String kvServerUrl) {
+        this.kvServerUrl = kvServerUrl;
+        httpClient = HttpClient.newBuilder()
+                .connectTimeout(Duration.ofSeconds(5))
+                .build();
         register();
     }
 
     private void register() {
-        String URLRegister = url + "/register";
         try {
-            HttpRequest request = HttpRequest.newBuilder().GET().uri(URI.create(URLRegister)).build();
+            URI urlRegister = URI.create(kvServerUrl + "/register");
+            HttpRequest request = HttpRequest.newBuilder().GET().uri(urlRegister).timeout(Duration.ofSeconds(5)).build();
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
             if (response.statusCode() == 200) {
                 apiTokenServer = response.body();
@@ -40,28 +38,33 @@ public class KVTaskClient {
         }
     }
 
-    public void addTask(Task task) {
+    public void put(String key, String json) throws IOException, InterruptedException {
         try {
-            String URLAdd = url + "/addTask";
-            URI uri = URI.create(URLAdd+"?API_TOKEN="+apiTokenServer);
-            String toGsonTask = gson.toJson(task);
-            HttpRequest request = HttpRequest.newBuilder().POST(HttpRequest.BodyPublishers.ofString(toGsonTask)).uri(uri).build();
-            HttpResponse<String> response = httpClient.send(request,HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-            String responseBody = response.body();
-        }catch (Exception e){
-            System.out.println("Произошла ошибка при отправке запроса на сервер для добавлении задачи");
+            URI uriSave = URI.create(kvServerUrl + "/save/" + key + "?API_TOKEN=" + apiTokenServer);
+            HttpRequest request = HttpRequest.newBuilder().POST(HttpRequest.BodyPublishers.ofString(json)).uri(uriSave).build();
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() != 200) {
+                System.out.println("Сервер-хранилище не вернул код ответа 200. Код ответа: " + response.statusCode());
+            }
+        } catch (IOException | InterruptedException e) {
+            System.out.println("Произошла ошибка у KVTaskClient во время сохранения по ключу: " + key);
         }
     }
 
-    public String getApiTokenServer() {
-        return apiTokenServer;
-    }
-
-    public HttpClient getHttpClient() {
-        return httpClient;
-    }
-
-    public String getUrl() {
-        return url;
+    public String load(String key) throws IOException, InterruptedException {
+        try {
+            URI urlLoad = URI.create(kvServerUrl + "/load/" + key + "?API_TOKEN=" + apiTokenServer);
+            HttpRequest request = HttpRequest.newBuilder().GET().uri(urlLoad).build();
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() == 200) {
+                return response.body();
+            } else {
+                System.out.println("Сервер-хранилище не вернул код ответа 200. Код ответа: " + response.statusCode());
+                return "";
+            }
+        } catch (Exception e) {
+            System.out.println("Возникла проблема во время загрузки по ключу:" + key);
+            return "";
+        }
     }
 }

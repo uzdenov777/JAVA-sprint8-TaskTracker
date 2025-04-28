@@ -4,13 +4,12 @@ import manager.interfaces.HistoryManager;
 import manager.interfaces.PrioritizedManager;
 import manager.interfaces.TaskManager;
 
-import java.io.File;
-
 public class Managers {
 
-    public static HttpTaskManager getDefault() {
-        return new HttpTaskManager("http://localhost:8080");
+    public static HttpTaskManager getDefault(String kvServerUrl) {
+        return new HttpTaskManager(kvServerUrl);
     }
+
     public static TaskManager getInMemoryTaskManager() {
         return new InMemoryTaskManager();
     }

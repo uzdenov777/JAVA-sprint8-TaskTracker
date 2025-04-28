@@ -18,7 +18,7 @@ public class SubtaskTest {
 
     @BeforeEach
     public void setManager() {
-        manager = Managers.getDefault();
+        manager = Managers.getInMemoryTaskManager();
         epic = new Epic("epic1", "epic1epic1", manager.getNewId(), StatusTask.NEW, TypeTask.EPIC);
         manager.addEpic(epic);
     }

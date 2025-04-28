@@ -18,7 +18,7 @@ public class TaskTest {
 
     @BeforeEach
     public void setManager() {
-        manager = Managers.getDefault();
+        manager = Managers.getInMemoryTaskManager();
     }
 
     @Test

@@ -109,7 +109,7 @@ public enum TypeEndpoint {
         }
 
         boolean isLenghtPath = requestPath.length == 4;
-        boolean isPatchSubtask_Epic = (requestPath[2].equals("subtask")) && (requestPath[3].equals("epic"));
+        boolean isPatchSubtask_Epic = (requestPath[2].equals("epic")) && (requestPath[3].equals("subtask"));
         if (isLenghtPath && isPatchSubtask_Epic) {
             return GET_EPIC_SUBTASKS;
         }

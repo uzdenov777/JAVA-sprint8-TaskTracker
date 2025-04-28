@@ -50,6 +50,7 @@ public class InMemoryHistoryManager implements HistoryManager {
 
     @Override
     public void removeLast() {
+
         Node oldLast = last;
         Task getOldTask = last.task;
         int idTask = getOldTask.getId();
@@ -108,6 +109,16 @@ public class InMemoryHistoryManager implements HistoryManager {
     @Override
     public void removeNode(Node node) { // вырезает запись
         int idDeletingNode = node.task.getId();
+
+        if (historyTask.size() == 1) {
+            first = null;
+            last = null;
+
+            node.prev = null;
+            node.next = null;
+            historyTask.remove(idDeletingNode);
+            return;
+        }
 
         if (first == node) { //вырезает начало
             first = first.next;

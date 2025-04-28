@@ -28,19 +28,21 @@ public class HttpTaskServer {
     private final static int PORT = 8080;
     private final HttpServer server;
     private final String apiToken;
+
     private final HttpTaskManager manager;
     private final Gson gson;
 
-
-    public HttpTaskServer() throws IOException {
-        server = HttpServer.create(new InetSocketAddress("localhost", PORT), 0);
-        apiToken = generateApiToken();
-        gson = CreateGson.createGson();
-        manager = Managers.getDefault();
-        server.createContext("/register", this::register);
-        server.createContext("/save", this::save);
-        server.createContext("/load", this::load);
-        server.createContext("/tasks", this::tasks);
+    public HttpTaskServer(String kvServerUrl) {
+        try {
+            server = HttpServer.create(new InetSocketAddress("localhost", PORT), 0);
+            apiToken = generateApiToken();
+            gson = CreateGson.createGson();
+            manager = Managers.getDefault(kvServerUrl);
+            server.createContext("/register", this::register);
+            server.createContext("/tasks", this::tasks);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private void register(HttpExchange httpExchange) {
@@ -60,12 +62,6 @@ public class HttpTaskServer {
         } finally {
             httpExchange.close();
         }
-    }
-
-    private void save(HttpExchange httpExchange) {
-    }
-
-    private void load(HttpExchange httpExchange) {
     }
 
     private void tasks(HttpExchange httpExchange) throws IOException {
@@ -164,7 +160,6 @@ public class HttpTaskServer {
             httpExchange.close();
         }
     }
-
 
     private void addTask(HttpExchange httpExchange) throws IOException {
         try (InputStream inputStream = httpExchange.getRequestBody()) {
@@ -524,17 +519,9 @@ public class HttpTaskServer {
 
     private boolean isValidToken(HttpExchange httpExchange) {
         try {
-            URI requestURI = httpExchange.getRequestURI();
-            String[] query = requestURI.getQuery().split("&");
-            if (query.length < 1) {
-                System.out.println("В запросе клиента строка запроса пустая");
-                return false;
-            }
-            String token = query[0];
-            String[] key_values = token.split("=");
-            String key = key_values[0];
-            String value = key_values[1];
-            if (key.equals("API_TOKEN") && value.equals(apiToken)) {
+            String rawQuery = httpExchange.getRequestURI().getRawQuery();
+            boolean isVAlidToken = rawQuery != null && (rawQuery.contains("API_TOKEN=" + apiToken));
+            if (isVAlidToken) {
                 return true;
             } else {
                 System.out.println("В запросе клиента указан не верный формат API_TOKEN или неверное его значение");
@@ -560,5 +547,9 @@ public class HttpTaskServer {
 
     private String generateApiToken() {
         return "" + System.currentTimeMillis();
+    }
+
+    public HttpTaskManager getManager() {
+        return manager;
     }
 }

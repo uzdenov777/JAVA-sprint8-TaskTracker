@@ -167,7 +167,7 @@ public class InMemoryTaskManager implements TaskManager {
         boolean isAddTaskWithoutIntersection;
 
         if (isTaskExist) {
-            System.out.println("Задача с таким ID уже создана. Не добавлен задача " + taskInput.getName() + " с ID:" + taskInput.getId());
+            System.out.println("Задача с таким ID уже создана. Не добавлена задача " + taskInput.getName() + " с ID:" + taskInput.getId());
             return false;
         }
 

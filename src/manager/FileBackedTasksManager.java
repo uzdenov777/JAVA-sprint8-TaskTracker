@@ -24,7 +24,7 @@ public class FileBackedTasksManager extends InMemoryTaskManager {
         super();
     }
 
-    private void save() {
+    protected void save() {
         if (saveFile == null) {
             return;
         }
@@ -158,7 +158,7 @@ public class FileBackedTasksManager extends InMemoryTaskManager {
                     default:
                         manager.addTask(restoredTaskToAdd);
                 }
-            } else if (i+1 == readTasksFromFile.size()-1) {
+            } else if (i + 1 == readTasksFromFile.size() - 1) {
                 i++;
                 String historyCsvFormat = readTasksFromFile.get(i);
                 List<Integer> history = historyFromString(historyCsvFormat);

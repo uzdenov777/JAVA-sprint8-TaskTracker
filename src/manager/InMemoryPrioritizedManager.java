@@ -20,6 +20,9 @@ public class InMemoryPrioritizedManager implements PrioritizedManager {
         LocalDateTime startOutTask = task.getStartTime();
         LocalDateTime endOutTask = task.getEndTime();
 
+        if (startOutTask != null && task.getClass() == Epic.class) {
+            return true; //это сделано для того чтобы при восстановлении не пустой эпик нигде не числился в списках приоритета
+        }
 
         if (startOutTask == null) {//Null может быть только у Epic-a, у которого нет подзадач, такие Epic-и храним в отдельном списке.
             nullDateTasks.add(task);
@@ -44,7 +47,7 @@ public class InMemoryPrioritizedManager implements PrioritizedManager {
             if (endOutTask.isBefore(first)) {
                 tasksByPriority.put(startOutTask, task);
                 return true;
-            }else {
+            } else {
                 System.out.println("Задача которую хотите добавить заканчивается позже чем начало следующей");
                 return false;
             }
@@ -97,7 +100,7 @@ public class InMemoryPrioritizedManager implements PrioritizedManager {
         }
 
         if (newStartTime == null) {
-         // значит нет подзадач у эпика и добавляем в nullDateTasks.
+            // значит нет подзадач у эпика и добавляем в nullDateTasks.
             addTaskWithoutIntersection(newEpic);
         }
     }
