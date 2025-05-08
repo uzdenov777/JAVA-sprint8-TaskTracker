@@ -102,6 +102,7 @@ public class TaskTest {
     public void returnSize0ClearTasks() {
         Task task = new Task("task", "task1task1", manager.getNewId(), StatusTask.NEW, TypeTask.TASK, "20.03.2025 11:00", 1);
         Task task2 = new Task("task2", "task2task2", manager.getNewId(), StatusTask.NEW, TypeTask.TASK, "20.03.2025 12:00", 1);
+
         manager.addTask(task);
         manager.addTask(task2);
         manager.clearTasks();
