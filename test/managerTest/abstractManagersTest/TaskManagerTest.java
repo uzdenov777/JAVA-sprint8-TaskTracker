@@ -8,6 +8,7 @@ import model.Epic;
 import model.Subtask;
 import model.Task;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.*;
@@ -17,82 +18,66 @@ import static org.junit.jupiter.api.Assertions.*;
 public abstract class TaskManagerTest<T extends TaskManager> {
 
     protected TaskManager manager;
+    Task doneTask;
+    Epic firstEpic;
+    Subtask subtaskNew;
+    Subtask subtaskProgress;
 
     public abstract T createTaskManager();
+
 
     @BeforeEach
     public void setupManager() {
         manager = createTaskManager();
+        doneTask = new Task("task", "task1task1", manager.getNewId(), StatusTask.DONE, TypeTask.TASK, "21.03.2025 12:00", 1);
+        firstEpic = new Epic("epic1", "epic1epic1", manager.getNewId(), StatusTask.NEW, TypeTask.EPIC);
+        subtaskNew = new Subtask("subtask1", "subtask1subtask1", manager.getNewId(), StatusTask.NEW, firstEpic.getId(), TypeTask.SUBTASK, "24.03.2025 12:00", 1);
+        subtaskProgress = new Subtask("subtask2", "subtask2subtask2", manager.getNewId(), StatusTask.IN_PROGRESS, firstEpic.getId(), TypeTask.SUBTASK, "20.03.2025 12:00", 30);
     }
 
     @Test
-    public void get1And2And3IntTestNewID() {
+    @DisplayName("Каждый вызов manager.getNewId() возвращает новый ID для задач")
+    public void getNewId_shouldReturnNewID() {
         int taskId = manager.getNewId();
-        assertEquals(1, taskId);
-
         int subtaskId = manager.getNewId();
-        assertEquals(2, subtaskId);
-
         int epicId = manager.getNewId();
-        assertEquals(3, epicId);
+
+        assertEquals(5, taskId);
+        assertEquals(6, subtaskId);
+        assertEquals(7, epicId);
     }
 
     @Test
-    public void getListEmptyHistory() {
-        Task task1 = new Task("task", "task1task1", manager.getNewId(), StatusTask.NEW, TypeTask.TASK, "21.03.2025 12:00", 1);
-        manager.addTask(task1);
-
+    @DisplayName("Возвращает пустой список истории, когда задача не была запрошена")
+    public void getHistory_shouldReturnEmptyHistory() {
+        manager.addTask(doneTask);
         List<Task> history = manager.getHistory();
+
         assertTrue(history.isEmpty());
     }
 
     @Test
-    public void get3ListSizeHistory() {
-        Task task1 = new Task("task", "task1task1", manager.getNewId(), StatusTask.NEW, TypeTask.TASK, "21.03.2025 12:00", 1);
-        Epic epic1 = new Epic("epic1", "epic1epic1", manager.getNewId(), StatusTask.NEW, TypeTask.EPIC);
-        Subtask subtask1 = new Subtask("subtask1", "subtask1subtask1", manager.getNewId(), StatusTask.NEW, epic1.getId(), TypeTask.SUBTASK, "24.03.2025 12:00", 1);
+    @DisplayName("Возвращает список истории, когда задачи были запрошены")
+    public void getHistory_shouldReturnNotEmptyHistory() {
+        manager.addTask(doneTask);
+        manager.addEpic(firstEpic);
+        manager.addSubtask(subtaskNew);
 
-
-        manager.addTask(task1);
-        manager.addEpic(epic1);
-        manager.addSubtask(subtask1);
-
-        manager.getTask(task1.getId());
-        manager.getEpic(epic1.getId());
-        manager.getSubtask(subtask1.getId());
+        manager.getTask(doneTask.getId());
+        manager.getEpic(firstEpic.getId());
+        manager.getSubtask(subtaskNew.getId());
         List<Task> history = manager.getHistory();
 
 
         assertEquals(3, history.size());
-
-        assertTrue(history.contains(task1));
-        assertTrue(history.contains(epic1));
-        assertTrue(history.contains(subtask1));
+        assertTrue(history.contains(doneTask));
+        assertTrue(history.contains(firstEpic));
+        assertTrue(history.contains(subtaskNew));
     }
 
     @Test
-    public void notGetTasksThatWereNotRequestedHistory() {
-        Task task1 = new Task("task", "task1task1", manager.getNewId(), StatusTask.NEW, TypeTask.TASK, "21.03.2025 12:00", 1);
-        Epic epic1 = new Epic("epic1", "epic1epic1", manager.getNewId(), StatusTask.NEW, TypeTask.EPIC);
-        Subtask subtask1 = new Subtask("subtask1", "subtask1subtask1", manager.getNewId(), StatusTask.NEW, epic1.getId(), TypeTask.SUBTASK, "24.03.2025 12:00", 1);
-
-
-        manager.addTask(task1);
-        manager.addEpic(epic1);
-        manager.addSubtask(subtask1);
-
-        manager.getTask(task1.getId());
-        List<Task> history = manager.getHistory();
-
-        assertEquals(1, history.size());
-        assertTrue(history.contains(task1));
-
-        assertFalse(history.contains(epic1));
-        assertFalse(history.contains(subtask1));
-    }
-
-    @Test
-    public void getListEmptyPrioritizedTasks_WhenNoTasksAdd() {
+    @DisplayName("Возвращает пустой список приоритетов ,когда задачи не были добавлены")
+    public void getPrioritizedTasks_shouldReturnEmptyPrioritizedTasks() {
         List<Task> prioritizedTasks = manager.getPrioritizedTasks();
 
         assertNotNull(prioritizedTasks);
@@ -100,50 +85,35 @@ public abstract class TaskManagerTest<T extends TaskManager> {
     }
 
     @Test
-    public void getPrioritizedTasksSize3() {
-        Task task1 = new Task("task", "task1task1", manager.getNewId(), StatusTask.NEW, TypeTask.TASK, "21.03.2025 12:00", 1);
-        Epic epic1 = new Epic("epic1", "epic1epic1", manager.getNewId(), StatusTask.NEW, TypeTask.EPIC);
-        Subtask subtask1 = new Subtask("subtask1", "subtask1subtask1", manager.getNewId(), StatusTask.NEW, epic1.getId(), TypeTask.SUBTASK, "24.03.2025 12:00", 1);
-
-
-        manager.addTask(task1);
-        manager.addEpic(epic1);
-        manager.addSubtask(subtask1);
-
+    @DisplayName("Возвращает список приоритетов не включительно Эпик,когда задачи были добавлены, а у Эпика есть подзадачи")
+    public void getPrioritizedTasks_shouldReturnPrioritizedTasks_EpicNotEmpty() {
+        manager.addTask(doneTask);
+        manager.addEpic(firstEpic);
+        manager.addSubtask(subtaskNew);
         List<Task> prioritizedTasks = manager.getPrioritizedTasks();
 
         assertEquals(2, prioritizedTasks.size());
-        assertTrue(prioritizedTasks.contains(task1));
-        assertTrue(prioritizedTasks.contains(subtask1));
-
-        assertFalse(prioritizedTasks.contains(epic1));
+        assertTrue(prioritizedTasks.contains(doneTask));
+        assertTrue(prioritizedTasks.contains(subtaskNew));
+        assertFalse(prioritizedTasks.contains(firstEpic));//не возвращает эпик потому что есть подзадачи в нем
     }
 
     @Test
-    public void returnTwoTaskInPrioritiesThatWasAdded() {
-        Task task1 = new Task("task", "task1task1", manager.getNewId(), StatusTask.NEW, TypeTask.TASK, "21.03.2025 12:00", 1);
-        Epic epic1 = new Epic("epic1", "epic1epic1", manager.getNewId(), StatusTask.NEW, TypeTask.EPIC);
-        Subtask subtask1 = new Subtask("subtask1", "subtask1subtask1", manager.getNewId(), StatusTask.NEW, epic1.getId(), TypeTask.SUBTASK, "24.03.2025 12:00", 1);
-
-        manager.addTask(task1);
-        manager.addEpic(epic1);
-
+    @DisplayName("Возвращает список приоритетов включительно Эпик,когда задачи были добавлены ,а у Эпика нет подзадач")
+    public void getPrioritizedTasks_shouldReturnPrioritizedTasks_EpicEmpty() {
+        manager.addTask(doneTask);
+        manager.addEpic(firstEpic);
         List<Task> prioritizedTasks = manager.getPrioritizedTasks();
 
         assertEquals(2, prioritizedTasks.size());
-        assertTrue(prioritizedTasks.contains(task1));
-        assertTrue(prioritizedTasks.contains(epic1));//возвращает Эпик потому что нет подзадач в нем
-
-        assertFalse(prioritizedTasks.contains(subtask1));
+        assertTrue(prioritizedTasks.contains(doneTask));
+        assertTrue(prioritizedTasks.contains(firstEpic));//возвращает Эпик потому что нет подзадач в нем
+        assertFalse(prioritizedTasks.contains(subtaskNew));
     }
 
     @Test
-    public void getListTasksEpicsSubtasksSizeEach0() {
-        Task task1 = new Task("task", "task1task1", manager.getNewId(), StatusTask.NEW, TypeTask.TASK, "21.03.2025 12:00", 1);
-        Epic epic1 = new Epic("epic1", "epic1epic1", manager.getNewId(), StatusTask.NEW, TypeTask.EPIC);
-        Subtask subtask1 = new Subtask("subtask1", "subtask1subtask1", manager.getNewId(), StatusTask.NEW, epic1.getId(), TypeTask.SUBTASK, "24.03.2025 12:00", 1);
-
-
+    @DisplayName("Возвращает все листы задач пустыми, когда задачи не были добавлены")
+    public void getListTasksEpicsSubtasks_shouldReturnEmptyLists() {
         List<Task> listTasks = manager.getListTasks();
         List<Epic> listEpics = manager.getListEpics();
         List<Subtask> listSubtasks = manager.getListSubtasks();
@@ -154,34 +124,27 @@ public abstract class TaskManagerTest<T extends TaskManager> {
     }
 
     @Test
-    public void getListTasksEpicsSubtasksSizeEach1() {
-        Task task1 = new Task("task", "task1task1", manager.getNewId(), StatusTask.NEW, TypeTask.TASK, "21.03.2025 12:00", 1);
-        Epic epic1 = new Epic("epic1", "epic1epic1", manager.getNewId(), StatusTask.NEW, TypeTask.EPIC);
-        Subtask subtask1 = new Subtask("subtask1", "subtask1subtask1", manager.getNewId(), StatusTask.NEW, epic1.getId(), TypeTask.SUBTASK, "24.03.2025 12:00", 1);
-
-        manager.addTask(task1);
-        manager.addEpic(epic1);
-        manager.addSubtask(subtask1);
+    @DisplayName("Возвращает все листы задач ,в которых по одному элементу")
+    public void getListTasksEpicsSubtasks_shouldReturnNotEmptyLists() {
+        manager.addTask(doneTask);
+        manager.addEpic(firstEpic);
+        manager.addSubtask(subtaskNew);
 
         List<Task> listTasks = manager.getListTasks();
         List<Epic> listEpics = manager.getListEpics();
         List<Subtask> listSubtasks = manager.getListSubtasks();
 
-        assertTrue(listTasks.contains(task1));
-        assertTrue(listEpics.contains(epic1));
-        assertTrue(listSubtasks.contains(subtask1));
-
+        assertTrue(listTasks.contains(doneTask));
+        assertTrue(listEpics.contains(firstEpic));
+        assertTrue(listSubtasks.contains(subtaskNew));
         assertEquals(1, listTasks.size());
         assertEquals(1, listEpics.size());
         assertEquals(1, listSubtasks.size());
     }
 
     @Test
-    public void getMapTasksEpicsSubtasksSizeEach0() {
-        Task task1 = new Task("task", "task1task1", manager.getNewId(), StatusTask.NEW, TypeTask.TASK, "21.03.2025 12:00", 1);
-        Epic epic1 = new Epic("epic1", "epic1epic1", manager.getNewId(), StatusTask.NEW, TypeTask.EPIC);
-        Subtask subtask1 = new Subtask("subtask1", "subtask1subtask1", manager.getNewId(), StatusTask.NEW, epic1.getId(), TypeTask.SUBTASK, "24.03.2025 12:00", 1);
-
+    @DisplayName("Возвращает все Map-ы задач пустыми, когда задачи не были добавлены")
+    public void getMapTasksEpicsSubtasks_shouldReturnEmptyMap() {
         Map<Integer, Task> taskMap = manager.getMapTasks();
         Map<Integer, Epic> epicMap = manager.getMapEpics();
         Map<Integer, Subtask> subtaskMap = manager.getMapSubtasks();
@@ -192,106 +155,139 @@ public abstract class TaskManagerTest<T extends TaskManager> {
     }
 
     @Test
-    public void getMapTasksEpicsSubtasksSizeEach1() {
-        Task task1 = new Task("task", "task1task1", manager.getNewId(), StatusTask.NEW, TypeTask.TASK, "21.03.2025 12:00", 1);
-        Epic epic1 = new Epic("epic1", "epic1epic1", manager.getNewId(), StatusTask.NEW, TypeTask.EPIC);
-        Subtask subtask1 = new Subtask("subtask1", "subtask1subtask1", manager.getNewId(), StatusTask.NEW, epic1.getId(), TypeTask.SUBTASK, "24.03.2025 12:00", 1);
-
-        manager.addTask(task1);
-        manager.addEpic(epic1);
-        manager.addSubtask(subtask1);
-
+    @DisplayName("Возвращает Map-у задач, когда добавлена одна задача")
+    public void getMapTasks_shouldReturnNotEmptyMap() {
+        manager.addTask(doneTask);
         Map<Integer, Task> taskMap = manager.getMapTasks();
-        Map<Integer, Epic> epicMap = manager.getMapEpics();
-        Map<Integer, Subtask> subtaskMap = manager.getMapSubtasks();
+        Task taskExtracted = taskMap.get(doneTask.getId());
 
-        Task taskExtracted = taskMap.get(task1.getId());
-        Epic epicExtracted = epicMap.get(epic1.getId());
-        Subtask extractedSubtask = subtaskMap.get(subtask1.getId());
-
-        assertEquals(task1, taskExtracted);
-        assertEquals(epic1, epicExtracted);
-        assertEquals(subtask1, extractedSubtask);
-
-        assertTrue(taskMap.containsKey(task1.getId()));
-        assertTrue(epicMap.containsKey(epic1.getId()));
-        assertTrue(subtaskMap.containsKey(subtask1.getId()));
-
+        assertEquals(doneTask, taskExtracted);
+        assertTrue(taskMap.containsKey(doneTask.getId()));
         assertEquals(1, taskMap.size());
+
+    }
+
+    @Test
+    @DisplayName("Возвращает Map-у Epic-ов, когда добавлен один Epic")
+    public void getMapEpics_shouldReturnNotEmptyMap() {
+        manager.addEpic(firstEpic);
+
+        Map<Integer, Epic> epicMap = manager.getMapEpics();
+        Epic epicExtracted = epicMap.get(firstEpic.getId());
+
+        assertEquals(firstEpic, epicExtracted);
+        assertTrue(epicMap.containsKey(firstEpic.getId()));
         assertEquals(1, epicMap.size());
+    }
+
+    @Test
+    @DisplayName("Возвращает Map-у подзадач, когда добавлена одна подзадача")
+    public void getMapSubtasks_shouldReturnNotEmptyMap() {
+        manager.addEpic(firstEpic);
+        manager.addSubtask(subtaskNew);
+
+        Map<Integer, Subtask> subtaskMap = manager.getMapSubtasks();
+        Subtask extractedSubtask = subtaskMap.get(subtaskNew.getId());
+
+        assertEquals(subtaskNew, extractedSubtask);
+        assertTrue(subtaskMap.containsKey(subtaskNew.getId()));
         assertEquals(1, subtaskMap.size());
     }
 
     @Test
-    public void clearAllMapsAfterAddTasksEpicsAndSubtasks() {
-        Task task1 = new Task("task", "task1task1", manager.getNewId(), StatusTask.NEW, TypeTask.TASK, "21.03.2025 12:00", 1);
-        Epic epic1 = new Epic("epic1", "epic1epic1", manager.getNewId(), StatusTask.NEW, TypeTask.EPIC);
-        Subtask subtask1 = new Subtask("subtask1", "subtask1subtask1", manager.getNewId(), StatusTask.NEW, epic1.getId(), TypeTask.SUBTASK, "24.03.2025 12:00", 1);
-
-        manager.addTask(task1);
-        manager.addEpic(epic1);
-        manager.addSubtask(subtask1);
+    @DisplayName("Проверяем как метод по удалению всех задач очищают Map-у ,при этом в ней были задачи")
+    public void clearTasks() {
+        manager.addTask(doneTask);
 
         Map<Integer, Task> taskMap = manager.getMapTasks();
-        Map<Integer, Epic> epicMap = manager.getMapEpics();
-        Map<Integer, Subtask> subtaskMap = manager.getMapSubtasks();
-
-        assertFalse(taskMap.isEmpty());
-        assertFalse(epicMap.isEmpty());
-        assertFalse(subtaskMap.isEmpty());
-
         manager.clearTasks();
-        manager.clearEpics();
-        manager.clearSubtasks();
 
         assertTrue(taskMap.isEmpty());
+    }
+
+    @Test
+    @DisplayName("Проверяем как метод по удалению всех Epic-ов очищают Map-у ,при этом в ней были Epic-и")
+    public void clearEpics() {
+        manager.addEpic(firstEpic);
+
+        Map<Integer, Epic> epicMap = manager.getMapEpics();
+        manager.clearEpics();
+
         assertTrue(epicMap.isEmpty());
+    }
+
+    @Test
+    @DisplayName("Проверяем как метод по удалению всех подзадач очищают Map-у ,при этом в ней были подзадачи")
+    public void clearSubtasks() {
+        manager.addSubtask(subtaskNew);
+
+        Map<Integer, Subtask> subtaskMap = manager.getMapSubtasks();
+        manager.clearSubtasks();
+
         assertTrue(subtaskMap.isEmpty());
     }
 
     @Test
-    public void getTasksById_shouldReturnEmptyOptional_whenTaskDoesNotAdd() {
-        Task task1 = new Task("task", "task1task1", manager.getNewId(), StatusTask.NEW, TypeTask.TASK, "21.03.2025 12:00", 1);
-        Epic epic1 = new Epic("epic1", "epic1epic1", manager.getNewId(), StatusTask.NEW, TypeTask.EPIC);
-        Subtask subtask1 = new Subtask("subtask1", "subtask1subtask1", manager.getNewId(), StatusTask.NEW, epic1.getId(), TypeTask.SUBTASK, "24.03.2025 12:00", 1);
+    @DisplayName("Возвращает пустой Optional, когда задача не была добавлена")
+    public void getTasks_shouldReturnEmptyOptional_whenTaskDoesNotAdd() {
+        Optional<Task> task = manager.getTask(doneTask.getId());
 
-        Optional<Task> taskOptional = manager.getTask(task1.getId());
-        Optional<Epic> epicOptional = manager.getEpic(epic1.getId());
-        Optional<Subtask> subtaskOptional = manager.getSubtask(subtask1.getId());
-
-        assertTrue(taskOptional.isEmpty());
-        assertTrue(epicOptional.isEmpty());
-        assertTrue(subtaskOptional.isEmpty());
+        assertTrue(task.isEmpty());
     }
 
     @Test
-    public void getTasksById_shouldReturnPresentOptional_whenTaskDoesAdd() {
-        Task task1 = new Task("task", "task1task1", manager.getNewId(), StatusTask.NEW, TypeTask.TASK, "21.03.2025 12:00", 1);
-        Epic epic1 = new Epic("epic1", "epic1epic1", manager.getNewId(), StatusTask.NEW, TypeTask.EPIC);
-        Subtask subtask1 = new Subtask("subtask1", "subtask1subtask1", manager.getNewId(), StatusTask.NEW, epic1.getId(), TypeTask.SUBTASK, "24.03.2025 12:00", 1);
+    @DisplayName("Возвращает пустой Optional, когда Epic не была добавлен")
+    public void getEpic_shouldReturnEmptyOptional_whenEpicDoesNotAdd() {
+        Optional<Epic> epic = manager.getEpic(firstEpic.getId());
 
-        manager.addTask(task1);
-        manager.addEpic(epic1);
-        manager.addSubtask(subtask1);
-
-        Optional<Task> taskOptional = manager.getTask(task1.getId());
-        Optional<Epic> epicOptional = manager.getEpic(epic1.getId());
-        Optional<Subtask> subtaskOptional = manager.getSubtask(subtask1.getId());
-
-        assertTrue(taskOptional.isPresent());
-        assertTrue(epicOptional.isPresent());
-        assertTrue(subtaskOptional.isPresent());
+        assertTrue(epic.isEmpty());
     }
 
     @Test
-    public void returnTrueAddTaskEpicSubtask_whenRightTaskDoesAdd() {
-        Task task1 = new Task("task", "task1task1", manager.getNewId(), StatusTask.NEW, TypeTask.TASK, "21.03.2025 12:00", 1);
-        Epic epic1 = new Epic("epic1", "epic1epic1", manager.getNewId(), StatusTask.NEW, TypeTask.EPIC);
-        Subtask subtask1 = new Subtask("subtask1", "subtask1subtask1", manager.getNewId(), StatusTask.NEW, epic1.getId(), TypeTask.SUBTASK, "24.03.2025 12:00", 1);
+    @DisplayName("Возвращает пустой Optional, когда Подзадача не была добавлена")
+    public void getSubtask_shouldReturnEmptyOptional_whenSubtaskDoesNotAdd() {
+        Optional<Subtask> subtask = manager.getSubtask(subtaskNew.getId());
 
-        boolean isAddTask = manager.addTask(task1);
-        boolean isAddEpic = manager.addEpic(epic1);
-        boolean isAddSubtask = manager.addSubtask(subtask1);
+        assertTrue(subtask.isEmpty());
+    }
+
+    @Test
+    @DisplayName("Возвращает задачу по ID, когда задача была добавлена")
+    public void getTask_shouldReturnPresentOptional_whenTaskDoesAdd() {
+        manager.addTask(doneTask);
+
+        Task managerTask = manager.getTask(doneTask.getId()).get();
+
+        assertEquals(doneTask, managerTask);
+    }
+
+    @Test
+    @DisplayName("Возвращает Epic по ID, когда Epic был добавлен")
+    public void getEpic_shouldReturnPresentOptional_whenEpicDoesAdd() {
+        manager.addEpic(firstEpic);
+
+        Epic managerEpic = manager.getEpic(firstEpic.getId()).get();
+
+        assertEquals(firstEpic, managerEpic);
+    }
+
+    @Test
+    @DisplayName("Возвращает подзадачу по ID, когда подзадача была добавлена")
+    public void getSubtask_shouldReturnPresentOptional_whenSubtaskDoesAdd() {
+        manager.addEpic(firstEpic);
+        manager.addSubtask(subtaskNew);
+
+        Subtask managerSubtask = manager.getSubtask(subtaskNew.getId()).get();
+
+        assertEquals(subtaskNew, managerSubtask);
+    }
+
+    @Test
+    @DisplayName("Проверяем что задачи добавляются и возвращает true")
+    public void returnTrueAddTaskEpicSubtask_whenValidTaskDoesAdd() {
+        boolean isAddTask = manager.addTask(doneTask);
+        boolean isAddEpic = manager.addEpic(firstEpic);
+        boolean isAddSubtask = manager.addSubtask(subtaskNew);
 
         assertTrue(isAddTask);
         assertTrue(isAddEpic);
@@ -299,25 +295,21 @@ public abstract class TaskManagerTest<T extends TaskManager> {
     }
 
     @Test
-    public void returnFalseAddTaskEpicSubtask_whenIDBusyTaskDoesAdd() {
-        Task task1 = new Task("task", "task1task1", manager.getNewId(), StatusTask.NEW, TypeTask.TASK, "21.03.2025 12:00", 1);
-        Epic epic1 = new Epic("epic1", "epic1epic1", manager.getNewId(), StatusTask.NEW, TypeTask.EPIC);
-        Subtask subtask1 = new Subtask("subtask1", "subtask1subtask1", manager.getNewId(), StatusTask.NEW, epic1.getId(), TypeTask.SUBTASK, "24.03.2025 12:00", 1);
-        manager.addTask(task1);
-        manager.addEpic(epic1);
-        manager.addSubtask(subtask1);
+    @DisplayName("Проверяем что не будут добавлены задачи с уже занятыми ID")
+    public void returnFalseAddTaskEpicSubtask_whenIdAdded() {
+        manager.addTask(doneTask);
+        manager.addEpic(firstEpic);
+        manager.addSubtask(subtaskNew);
 
-        int idTask1 = task1.getId();
-        int idEpic1 = epic1.getId();
-        int idSubtask1 = subtask1.getId();
-
-        Task task2 = new Task("task", "task1task1", idTask1, StatusTask.NEW, TypeTask.TASK, "21.03.2025 12:00", 1);
-        Epic epic2 = new Epic("epic1", "epic1epic1", idEpic1, StatusTask.NEW, TypeTask.EPIC);
-        Subtask subtask2 = new Subtask("subtask1", "subtask1subtask1", idSubtask1, StatusTask.NEW, epic1.getId(), TypeTask.SUBTASK, "24.03.2025 12:00", 1);
-
-        boolean isAddTask = manager.addTask(task2);
-        boolean isAddEpic = manager.addEpic(epic2);
-        boolean isAddSubtask = manager.addSubtask(subtask2);
+        int idDoneTask = doneTask.getId();
+        int idFirstEpic = firstEpic.getId();
+        int idSubtaskNew = subtaskNew.getId();
+        Task task2Get = new Task("task", "task1task1", idDoneTask, StatusTask.NEW, TypeTask.TASK, "21.03.2025 12:00", 1);
+        Epic epicGet = new Epic("epic1", "epic1epic1", idFirstEpic, StatusTask.NEW, TypeTask.EPIC);
+        Subtask subtaskGet = new Subtask("subtask1", "subtask1subtask1", idSubtaskNew, StatusTask.NEW, firstEpic.getId(), TypeTask.SUBTASK, "24.03.2025 12:00", 1);
+        boolean isAddTask = manager.addTask(task2Get);
+        boolean isAddEpic = manager.addEpic(epicGet);
+        boolean isAddSubtask = manager.addSubtask(subtaskGet);
 
         assertFalse(isAddTask);
         assertFalse(isAddEpic);
@@ -325,431 +317,289 @@ public abstract class TaskManagerTest<T extends TaskManager> {
     }
 
     @Test
-    public void returnFalseAddSubtask_whenAddToNotExistentEpic() {
+    @DisplayName("Подзадача не должны быть добавлена если ее Эпик не добавлен")
+    public void addSubtask_returnFalseAddSubtask_whenAddToNotExistentEpic() {
         int idEpicNotExistent = 777;
-        Subtask subtask1 = new Subtask("subtask1", "subtask1subtask1", manager.getNewId(), StatusTask.NEW, idEpicNotExistent, TypeTask.SUBTASK, "24.03.2025 12:00", 1);
 
-        boolean isAddSubtask = manager.addSubtask(subtask1);
+        Subtask subtask = new Subtask("subtask1", "subtask1subtask1", manager.getNewId(), StatusTask.NEW, idEpicNotExistent, TypeTask.SUBTASK, "24.03.2025 12:00", 1);
+        boolean isAddSubtask = manager.addSubtask(subtask);
+
         assertFalse(isAddSubtask);
     }
 
     @Test
-    public void returnTrueUpdateTask_whenCorrectTaskDoesUpdate() {
-        Task task1 = new Task("task", "task1task1", manager.getNewId(), StatusTask.NEW, TypeTask.TASK, "21.03.2025 12:00", 1);
-        manager.addTask(task1);
+    @DisplayName("Здесь задача успешно обновиться потому что все условия соблюдены")
+    public void updateTask_returnTrueUpdateTask_whenCorrectTaskDoesUpdate() {
+        manager.addTask(doneTask);
 
-        int idTask1 = task1.getId();
-        Task task2 = new Task("taskUpdate", "taskUpdate", idTask1, StatusTask.NEW, TypeTask.TASK, "21.03.2025 12:00", 1);
+        int idDoneTask = doneTask.getId();
+        Task taskNew = new Task("taskUpdate", "taskUpdate", idDoneTask, StatusTask.NEW, TypeTask.TASK, "21.03.2025 12:00", 1);
+        boolean isUpdateTask = manager.updateTask(taskNew);
+        Task getUpdateTask = manager.getTask(idDoneTask).get();
 
-        boolean isUpdateTask = manager.updateTask(task2);
+        assertEquals(taskNew, getUpdateTask);
         assertTrue(isUpdateTask);
-
-        Optional<Task> getOptionalTask = manager.getTask(idTask1);
-        assertTrue(getOptionalTask.isPresent());
-
-        Task getUpdateTask = getOptionalTask.get();
-        assertEquals(task2, getUpdateTask);
     }
 
     @Test
-    public void returnFalseUpdateTask_whenNoCorrectTaskDoesUpdate() {
-        Task task1 = new Task("task", "task1task1", manager.getNewId(), StatusTask.NEW, TypeTask.TASK, "21.03.2025 12:00", 1);
-        boolean isUpdateTask = manager.updateTask(task1);
+    @DisplayName("Не получиться обновить задачу, которая не добавлена")
+    public void updateTask_returnFalseUpdateTask_whenNoCorrectTaskDoesUpdate() {
+        boolean isUpdateTask = manager.updateTask(doneTask);
 
         assertFalse(isUpdateTask);
     }
 
     @Test
-    public void returnTrueOnlyUpdateSubtask_whenThereIsSubtaskByIDAndItsEpic() {
-        Epic epic1 = new Epic("epic1", "epic1epic1", manager.getNewId(), StatusTask.NEW, TypeTask.EPIC);
-        Subtask subtask1 = new Subtask("subtask1", "subtask1subtask1", manager.getNewId(), StatusTask.NEW, epic1.getId(), TypeTask.SUBTASK, "24.03.2025 12:00", 1);
+    @DisplayName("Успешное обновление подзадачи, когда она существует")
+    public void updateSubtask_returnTrueUpdateSubtask_whenThereIsSubtaskByID() {
+        manager.addEpic(firstEpic);
+        manager.addSubtask(subtaskNew);
 
-        manager.addEpic(epic1);
-        manager.addSubtask(subtask1);
+        int idSubtaskNew = subtaskNew.getId();
+        Subtask subtaskDone = new Subtask("subtask1", "UpdateSubtask", idSubtaskNew, StatusTask.DONE, firstEpic.getId(), TypeTask.SUBTASK, "24.03.2025 12:00", 1);
+        boolean isUpdateSubtask = manager.updateSubtask(subtaskDone);
+        Subtask getSubtask = manager.getSubtask(idSubtaskNew).get();
 
-        int idSubtask1 = subtask1.getId();
-        Subtask subtask2 = new Subtask("subtask1", "UpdateSubtask", idSubtask1, StatusTask.NEW, epic1.getId(), TypeTask.SUBTASK, "24.03.2025 12:00", 1);
-
-        boolean isUpdateSubtask = manager.updateSubtask(subtask2);
+        assertEquals(subtaskDone, getSubtask);
         assertTrue(isUpdateSubtask);
-
-        Optional<Subtask> getOptionalSubtask = manager.getSubtask(idSubtask1);
-        assertTrue(getOptionalSubtask.isPresent());
-
-        Subtask getSubtask = getOptionalSubtask.get();
-        assertEquals(subtask2, getSubtask);
     }
 
     @Test
-    public void returnFalseOnlyUpdateSubtask_whenSubtasksByIDNotExist() {
-        Epic epic1 = new Epic("epic1", "epic1epic1", manager.getNewId(), StatusTask.NEW, TypeTask.EPIC);
-        Subtask subtask1 = new Subtask("subtask1", "subtask1subtask1", manager.getNewId(), StatusTask.NEW, epic1.getId(), TypeTask.SUBTASK, "24.03.2025 12:00", 1);
+    @DisplayName("Не получиться обновить подзадачу, которая не добавлена")
+    public void updateSubtask_returnFalseUpdateSubtask_whenSubtasksByIDNotExist() {
+        manager.addEpic(firstEpic);
+        manager.addSubtask(subtaskNew);
 
-        manager.addEpic(epic1);
-        manager.addSubtask(subtask1);
+        int notExistIDSubtaskNew = 789;
+        Subtask subtaskNew = new Subtask("subtask1", "subtask1subtask1", notExistIDSubtaskNew, StatusTask.NEW, firstEpic.getId(), TypeTask.SUBTASK, "24.03.2025 12:00", 1);
+        boolean isUpdateSubtask = manager.updateSubtask(subtaskNew);
 
-        int notExistIDSubtask2 = 789;
-        Subtask subtask2 = new Subtask("subtask1", "subtask1subtask1", notExistIDSubtask2, StatusTask.NEW, epic1.getId(), TypeTask.SUBTASK, "24.03.2025 12:00", 1);
-
-        boolean isUpdateSubtask = manager.updateSubtask(subtask2);
         assertFalse(isUpdateSubtask);
     }
 
     @Test
-    public void returnFalseOnlyUpdateSubtask_whenSubtaskNotHaveItsEpic() {
-        Epic epic1 = new Epic("epic1", "epic1epic1", manager.getNewId(), StatusTask.NEW, TypeTask.EPIC);
-        Subtask subtask1 = new Subtask("subtask1", "subtask1subtask1", manager.getNewId(), StatusTask.NEW, epic1.getId(), TypeTask.SUBTASK, "24.03.2025 12:00", 1);
-        manager.addEpic(epic1);
-        manager.addSubtask(subtask1);
+    @DisplayName("Не получиться обновить задачу, у которой Эпик не добавлен")
+    public void updateSubtask_returnFalseOnlyUpdateSubtask_whenSubtaskNotHaveItsEpic() {
+        manager.addEpic(firstEpic);
+        manager.addSubtask(subtaskNew);
 
         int idEpicNotExistent = 777;
-        int idSubtask1 = subtask1.getId();
-        Subtask subtask2 = new Subtask("subtask1", "subtask1subtask1", idSubtask1, StatusTask.NEW, idEpicNotExistent, TypeTask.SUBTASK, "24.03.2025 12:00", 1);
-        boolean isUpdateSubtask = manager.updateSubtask(subtask2);
+        int idSubtaskNew = subtaskNew.getId();
+        Subtask subtaskDone = new Subtask("subtask1", "subtask1subtask1", idSubtaskNew, StatusTask.DONE, idEpicNotExistent, TypeTask.SUBTASK, "24.03.2025 12:00", 1);
+        boolean isUpdateSubtask = manager.updateSubtask(subtaskDone);
+
         assertFalse(isUpdateSubtask);
     }
 
     @Test
-    public void returnTrueUpdateEpic_whenEpicExist() {
-        Epic epic1 = new Epic("epic1", "epic1epic1", manager.getNewId(), StatusTask.NEW, TypeTask.EPIC);
-        manager.addEpic(epic1);
+    @DisplayName("Успешно обновится Эпик, когда он добавлен")
+    public void updateEpic_returnTrueUpdateEpic_whenEpicExist() {
+        manager.addEpic(firstEpic);
 
-        int idEpic1 = epic1.getId();
-        Epic epic2 = new Epic("epic1", "UpdateEpic", idEpic1, StatusTask.DONE, TypeTask.EPIC);
+        int idFirstEpic = firstEpic.getId();
+        Epic epicDone = new Epic("epic1", "UpdateEpic", idFirstEpic, StatusTask.DONE, TypeTask.EPIC);
+        boolean isUpdateEpic = manager.updateEpic(epicDone);
+        Epic getUpdateEpic = manager.getEpic(idFirstEpic).get();
 
-        boolean isUpdateEpic = manager.updateEpic(epic2);
         assertTrue(isUpdateEpic);
-
-        Optional<Epic> optionalGetUpdateEpic = manager.getEpic(idEpic1);
-        assertTrue(optionalGetUpdateEpic.isPresent());
-
-        Epic getUpdateEpic = optionalGetUpdateEpic.get();
-        assertEquals(epic2, getUpdateEpic);
+        assertEquals(epicDone, getUpdateEpic);
     }
 
     @Test
-    public void returnTrueUpdateEmptyEpic_WhenNewEpicWithSubtasks() {
-        Epic epic1 = new Epic("epic1", "epic1epic1", manager.getNewId(), StatusTask.NEW, TypeTask.EPIC);
-        manager.addEpic(epic1);
-        HashMap<Integer, Subtask> getSubtasksEpic1 = epic1.getSubtasksMap();
-        assertTrue(getSubtasksEpic1.isEmpty());
+    @DisplayName("Успешно обновляем пустой эпик, на новую версию с подзадачами")
+    public void updateEpic_returnTrueUpdateEmptyEpic_WhenNewEpicWithSubtasks() {
+        manager.addEpic(firstEpic);
 
+        int idFirstEpic = firstEpic.getId();
+        Epic epicNEW = new Epic("epic1", "epicUpdate", idFirstEpic, StatusTask.NEW, TypeTask.EPIC);
+        Subtask subtaskDone = new Subtask("subtask1", "subtask1subtask1", manager.getNewId(), StatusTask.DONE, epicNEW.getId(), TypeTask.SUBTASK, "24.03.2025 12:00", 1);
+        Subtask subtaskNew = new Subtask("subtask2", "subtask2subtask2", manager.getNewId(), StatusTask.NEW, epicNEW.getId(), TypeTask.SUBTASK, "20.03.2025 12:00", 30);
+        epicNEW.addSubtask(subtaskDone);
+        epicNEW.addSubtask(subtaskNew);
+        boolean isUpdate = manager.updateEpic(epicNEW);
+        Epic getUpdateEpic = manager.getEpic(idFirstEpic).get();
 
-        int idEpic1 = epic1.getId();
-        Epic epic2 = new Epic("epic1", "epicUpdate", idEpic1, StatusTask.NEW, TypeTask.EPIC);
-        Subtask subtask1 = new Subtask("subtask1", "subtask1subtask1", manager.getNewId(), StatusTask.NEW, epic2.getId(), TypeTask.SUBTASK, "24.03.2025 12:00", 1);
-        Subtask subtask2 = new Subtask("subtask2", "subtask2subtask2", manager.getNewId(), StatusTask.NEW, epic2.getId(), TypeTask.SUBTASK, "20.03.2025 12:00", 30);
-        epic2.addSubtask(subtask1);
-        epic2.addSubtask(subtask2);
-        HashMap<Integer, Subtask> getSubtasksEpic2 = epic2.getSubtasksMap();
-        assertFalse(getSubtasksEpic2.isEmpty());
-
-        boolean isUpdate = manager.updateEpic(epic2);
         assertTrue(isUpdate);
-
-        Optional<Epic> optionalGetUpdateEpic = manager.getEpic(idEpic1);
-        assertTrue(optionalGetUpdateEpic.isPresent());
-
-        Epic getUpdateEpic = optionalGetUpdateEpic.get();
-        assertEquals(epic2, getUpdateEpic);
+        assertEquals(epicNEW, getUpdateEpic);
     }
 
     @Test
+    @DisplayName("Успешно обновляем Эпик с подзадачами, на новую версию без подзадач")
     public void returnTrueUpdateEpicWithSubtasks_WhenNewEpicEmptyEpic() {
-        Epic epic1 = new Epic("epic1", "epic1epic1", manager.getNewId(), StatusTask.NEW, TypeTask.EPIC);
-        Subtask subtask1 = new Subtask("subtask1", "subtask1subtask1", manager.getNewId(), StatusTask.DONE, epic1.getId(), TypeTask.SUBTASK, "24.03.2025 12:00", 1);
-        Subtask subtask2 = new Subtask("subtask2", "subtask2subtask2", manager.getNewId(), StatusTask.NEW, epic1.getId(), TypeTask.SUBTASK, "20.03.2025 12:00", 30);
-        manager.addEpic(epic1);
-        manager.addSubtask(subtask1);
-        manager.addSubtask(subtask2);
-        HashMap<Integer, Subtask> getSubtasksEpic1 = epic1.getSubtasksMap();
-        assertFalse(getSubtasksEpic1.isEmpty());
+        Subtask subtaskDone = new Subtask("subtask1", "subtask1subtask1", manager.getNewId(), StatusTask.DONE, firstEpic.getId(), TypeTask.SUBTASK, "24.03.2025 12:00", 1);
+        Subtask subtaskNew = new Subtask("subtask2", "subtask2subtask2", manager.getNewId(), StatusTask.NEW, firstEpic.getId(), TypeTask.SUBTASK, "20.03.2025 12:00", 30);
+        manager.addEpic(firstEpic);
+        manager.addSubtask(subtaskNew);
+        manager.addSubtask(subtaskDone);
 
-        int idEpic1 = epic1.getId();
-        Epic epic2 = new Epic("epic1", "epicUpdate", idEpic1, StatusTask.NEW, TypeTask.EPIC);
-        HashMap<Integer, Subtask> getSubtasksEpic2 = epic2.getSubtasksMap();
-        assertTrue(getSubtasksEpic2.isEmpty());
+        int idFirstEpic = firstEpic.getId();
+        Epic epicNew = new Epic("epic1", "epicUpdate", idFirstEpic, StatusTask.NEW, TypeTask.EPIC);
+        boolean isUpdate = manager.updateEpic(epicNew);
+        Epic getUpdateEpic = manager.getEpic(idFirstEpic).get();
+        HashMap<Integer, Subtask> getSubtasksEpic = epicNew.getSubtasksMap();
 
-        boolean isUpdate = manager.updateEpic(epic2);
         assertTrue(isUpdate);
-
-        Optional<Epic> optionalGetUpdateEpic = manager.getEpic(idEpic1);
-        assertTrue(optionalGetUpdateEpic.isPresent());
-
-        Epic getUpdateEpic = optionalGetUpdateEpic.get();
-        assertEquals(epic2, getUpdateEpic);
+        assertEquals(epicNew, getUpdateEpic);
+        assertTrue(getSubtasksEpic.isEmpty());
     }
 
     @Test
-    public void returnFalseUpdateEpic_whenEpicIDNotExist() {
-        Epic epic1 = new Epic("epic1", "epic1epic1", manager.getNewId(), StatusTask.NEW, TypeTask.EPIC);
-        boolean isUpdate = manager.updateEpic(epic1);
+    @DisplayName("Не получиться обновить эпик, когда он не добавлен")
+    public void updateEpic_returnFalseUpdateEpic_whenEpicIDNotExist() {
+        boolean isUpdate = manager.updateEpic(firstEpic);
 
         assertFalse(isUpdate);
     }
 
     @Test
-    public void returnTrueRemoveTaskById_WhenIdTaskExist() {
-        Task task1 = new Task("task", "task1task1", manager.getNewId(), StatusTask.NEW, TypeTask.TASK, "21.03.2025 12:00", 1);
-        boolean isAdd = manager.addTask(task1);
-        assertTrue(isAdd);
+    @DisplayName("Успешно удалит задачу по ID, когда она добавлена")
+    public void removeTaskById_returnTrueRemoveTaskById_WhenIdTaskExist() {
+        boolean isAdd = manager.addTask(doneTask);
+        boolean isRemove = manager.removeTaskById(doneTask.getId());
 
-        boolean isRemove = manager.removeTaskById(task1.getId());
+        assertTrue(isAdd);
         assertTrue(isRemove);
     }
 
     @Test
-    public void returnTrueRemoveTaskById_WhenIdTaskNotExist() {
-        Task task1 = new Task("task", "task1task1", manager.getNewId(), StatusTask.NEW, TypeTask.TASK, "21.03.2025 12:00", 1);
-        boolean isAdd = manager.addTask(task1);
-        assertTrue(isAdd);
-
+    @DisplayName("Не получиться удалить задачу по ID, если она не добавлена")
+    public void removeTaskById_returnFalseRemoveTaskById_WhenIdTaskNotExist() {
         int IdNotExist = 875;
         boolean isRemove = manager.removeTaskById(IdNotExist);
+
         assertFalse(isRemove);
     }
 
     @Test
-    public void returnTrueRemoveEpicById_WhenIdEpicExist() {
-        Epic epic1 = new Epic("epic1", "epic1epic1", manager.getNewId(), StatusTask.NEW, TypeTask.EPIC);
-        boolean isAdd = manager.addEpic(epic1);
-        assertTrue(isAdd);
+    @DisplayName("Успешно удалит Эпик по ID, когда он добавлен")
+    public void removeEpicById_returnTrueRemoveEpicById_WhenIdEpicExist() {
+        boolean isAdd = manager.addEpic(firstEpic);
+        boolean isRemove = manager.removeEpicById(firstEpic.getId());
 
-        boolean isRemove = manager.removeEpicById(epic1.getId());
+        assertTrue(isAdd);
         assertTrue(isRemove);
     }
 
     @Test
-    public void returnTrueRemoveEpicById_WhenEpicNotEmpty() {
-        Epic epic1 = new Epic("epic1", "epic1epic1", manager.getNewId(), StatusTask.NEW, TypeTask.EPIC);
-        Subtask subtask1 = new Subtask("subtask1", "subtask1subtask1", manager.getNewId(), StatusTask.NEW, epic1.getId(), TypeTask.SUBTASK, "24.03.2025 12:00", 1);
-        Subtask subtask2 = new Subtask("subtask2", "subtask2subtask2", manager.getNewId(), StatusTask.NEW, epic1.getId(), TypeTask.SUBTASK, "20.03.2025 12:00", 30);
-        boolean isAddEpic = manager.addEpic(epic1);
-        boolean isAddSubtask1 = manager.addSubtask(subtask1);
-        boolean isAddSubtask2 = manager.addSubtask(subtask2);
-        assertTrue(isAddEpic && isAddSubtask1 && isAddSubtask2);
+    @DisplayName("Успешно удаляем не пустой Эпик и заодно его подзадачи, когда добавлен эпик и его подзадачи")
+    public void removeEpicById_returnTrueRemoveEpicById_WhenEpicNotEmpty() {
+        boolean isAddEpic = manager.addEpic(firstEpic);
+        boolean isAddFirstSubtask = manager.addSubtask(subtaskNew);
+        boolean isAddSubtaskProgress = manager.addSubtask(subtaskProgress);
 
-        HashMap<Integer, Subtask> getSubtaskEpic = epic1.getSubtasksMap();
-        assertTrue(getSubtaskEpic.containsKey(subtask1.getId()));
-        assertTrue(getSubtaskEpic.containsKey(subtask2.getId()));
-        assertEquals(2, getSubtaskEpic.size());
-
-        HashMap<Integer, Task> getTasks = manager.getMapTasks();
-        HashMap<Integer, Epic> getEpics = manager.getMapEpics();
-        HashMap<Integer, Subtask> getSubtasks = manager.getMapSubtasks();
-
-        assertTrue(getTasks.isEmpty());
-
-        assertFalse(getEpics.isEmpty());
-        assertFalse(getSubtasks.isEmpty());
-
-        assertTrue(getEpics.containsKey(epic1.getId()));
-        assertTrue(getSubtasks.containsKey(subtask1.getId()));
-        assertTrue(getSubtasks.containsKey(subtask2.getId()));
+        boolean isRemoveFirstEpic = manager.removeEpicById(firstEpic.getId());
+        HashMap<Integer, Task> getTasksAfter = manager.getMapTasks();
+        HashMap<Integer, Epic> getEpicsAfter = manager.getMapEpics();
+        HashMap<Integer, Subtask> getSubtasksAfter = manager.getMapSubtasks();
 
 
-        boolean isRemoveEpic1 = manager.removeEpicById(epic1.getId());
-        assertTrue(isRemoveEpic1);
-
-        HashMap<Integer, Task> getTasks2 = manager.getMapTasks();
-        HashMap<Integer, Epic> getEpics2 = manager.getMapEpics();
-        HashMap<Integer, Subtask> getSubtasks2 = manager.getMapSubtasks();
-
-        assertTrue(getTasks2.isEmpty());
-
-        assertTrue(getEpics2.isEmpty());
-        assertTrue(getSubtasks2.isEmpty());
-
-        assertFalse(getEpics2.containsKey(epic1.getId()));
-        assertFalse(getSubtasks2.containsKey(subtask1.getId()));
-        assertFalse(getSubtasks2.containsKey(subtask2.getId()));
+        assertTrue(isAddEpic && isAddFirstSubtask && isAddSubtaskProgress);
+        assertTrue(isRemoveFirstEpic);
+        assertTrue(getTasksAfter.isEmpty());
+        assertTrue(getEpicsAfter.isEmpty());
+        assertTrue(getSubtasksAfter.isEmpty());
+        assertFalse(getEpicsAfter.containsKey(firstEpic.getId()));
+        assertFalse(getSubtasksAfter.containsKey(subtaskNew.getId()));
+        assertFalse(getSubtasksAfter.containsKey(subtaskProgress.getId()));
     }
 
     @Test
-    public void returnFalseRemoveEmptyEpicById_WhenIdEpicNotExist() {
-        Epic epic1 = new Epic("epic1", "epic1epic1", manager.getNewId(), StatusTask.NEW, TypeTask.EPIC);
-        boolean isAdd = manager.addEpic(epic1);
-        assertTrue(isAdd);
-
+    @DisplayName("Не получиться удалить Эпик по ID, когда он не добавлен")
+    public void removeEpicById_returnFalseRemoveEpicById_WhenIdEpicNotExist() {
         int idNotExist = 787;
         boolean isRemove = manager.removeEpicById(idNotExist);
-        assertFalse(isRemove);
 
-        HashMap<Integer, Epic> getEpics = manager.getMapEpics();
-        assertTrue(getEpics.containsKey(epic1.getId()));
-        assertFalse(getEpics.containsKey(idNotExist));
+        assertFalse(isRemove);
     }
 
     @Test
-    public void returnFalseRemoveNotEmptyEpicById_WhenIdEpicNotExist() {
-        Epic epic1 = new Epic("epic1", "epic1epic1", manager.getNewId(), StatusTask.NEW, TypeTask.EPIC);
-        Subtask subtask1 = new Subtask("subtask1", "subtask1subtask1", manager.getNewId(), StatusTask.NEW, epic1.getId(), TypeTask.SUBTASK, "24.03.2025 12:00", 1);
-        Subtask subtask2 = new Subtask("subtask2", "subtask2subtask2", manager.getNewId(), StatusTask.NEW, epic1.getId(), TypeTask.SUBTASK, "20.03.2025 12:00", 30);
-        boolean isAddEpic1 = manager.addEpic(epic1);
-        boolean isAddSubtask1 = manager.addSubtask(subtask1);
-        boolean isAddSubtask2 = manager.addSubtask(subtask2);
-        assertTrue(isAddEpic1);
-        assertTrue(isAddSubtask1);
-        assertTrue(isAddSubtask2);
+    @DisplayName("Успешно удаляем добавленную подзадачу")
+    public void removeSubtaskById_returnTrueRemoveSubtaskById_WhenIdSubtaskExist() {
+        boolean isAddFirstEpic = manager.addEpic(firstEpic);
+        boolean isAddSubtaskNew = manager.addSubtask(subtaskNew);
 
-        int idNotExist = 787;
-        boolean isRemove = manager.removeEpicById(idNotExist);
-        assertFalse(isRemove);
-
-        HashMap<Integer, Epic> getEpics = manager.getMapEpics();
+        boolean isRemove = manager.removeSubtaskById(subtaskNew.getId());
+        HashMap<Integer, Subtask> getSubtaskEpic = firstEpic.getSubtasksMap();
         HashMap<Integer, Subtask> getSubtasks = manager.getMapSubtasks();
 
-        assertTrue(getEpics.containsKey(epic1.getId()));
-        assertFalse(getEpics.containsKey(idNotExist));
-
-        assertTrue(getSubtasks.containsKey(subtask1.getId()));
-        assertTrue(getSubtasks.containsKey(subtask2.getId()));
-    }
-
-    @Test
-    public void returnTrueRemoveSubtaskById_WhenIdSubtaskExist() {
-        Epic epic1 = new Epic("epic1", "epic1epic1", manager.getNewId(), StatusTask.NEW, TypeTask.EPIC);
-        Subtask subtask1 = new Subtask("subtask1", "subtask1subtask1", manager.getNewId(), StatusTask.NEW, epic1.getId(), TypeTask.SUBTASK, "24.03.2025 12:00", 1);
-        Subtask subtask2 = new Subtask("subtask2", "subtask2subtask2", manager.getNewId(), StatusTask.NEW, epic1.getId(), TypeTask.SUBTASK, "20.03.2025 12:00", 30);
-        boolean isAddEpic1 = manager.addEpic(epic1);
-        boolean isAddSubtask1 = manager.addSubtask(subtask1);
-        boolean isAddSubtask2 = manager.addSubtask(subtask2);
-        assertTrue(isAddEpic1);
-        assertTrue(isAddSubtask1);
-        assertTrue(isAddSubtask2);
-
-        boolean isRemove = manager.removeSubtaskById(subtask1.getId());
+        assertTrue(isAddFirstEpic);
+        assertTrue(isAddSubtaskNew);
         assertTrue(isRemove);
-
-        HashMap<Integer, Epic> getEpics = manager.getMapEpics();
-        HashMap<Integer, Subtask> getSubtasks = manager.getMapSubtasks();
-        assertTrue(getEpics.containsKey(epic1.getId()));
-        assertTrue(getSubtasks.containsKey(subtask2.getId()));
-
-        assertFalse(getSubtasks.containsKey(subtask1.getId()));
-
-        HashMap<Integer, Subtask> getSubtaskEpic = epic1.getSubtasksMap();
-        assertTrue(getSubtaskEpic.containsKey(subtask2.getId()));
-
-        assertFalse(getSubtaskEpic.containsKey(subtask1.getId()));
+        assertFalse(getSubtasks.containsKey(subtaskNew.getId()));
+        assertFalse(getSubtaskEpic.containsKey(subtaskNew.getId()));
     }
 
     @Test
-    public void returnFalseRemoveSubtaskById_WhenIdSubtaskNotExist() {
-        Epic epic1 = new Epic("epic1", "epic1epic1", manager.getNewId(), StatusTask.NEW, TypeTask.EPIC);
-        Subtask subtask1 = new Subtask("subtask1", "subtask1subtask1", manager.getNewId(), StatusTask.NEW, epic1.getId(), TypeTask.SUBTASK, "24.03.2025 12:00", 1);
-        Subtask subtask2 = new Subtask("subtask2", "subtask2subtask2", manager.getNewId(), StatusTask.NEW, epic1.getId(), TypeTask.SUBTASK, "20.03.2025 12:00", 30);
-        boolean isAddEpic1 = manager.addEpic(epic1);
-        boolean isAddSubtask1 = manager.addSubtask(subtask1);
-        boolean isAddSubtask2 = manager.addSubtask(subtask2);
-        assertTrue(isAddEpic1);
-        assertTrue(isAddSubtask1);
-        assertTrue(isAddSubtask2);
-
-        int idNotExist = 787;
-        boolean isRemove = manager.removeSubtaskById(idNotExist);
-        assertFalse(isRemove);
-
-        HashMap<Integer, Epic> getEpics = manager.getMapEpics();
-        HashMap<Integer, Subtask> getSubtasks = manager.getMapSubtasks();
-        assertTrue(getEpics.containsKey(epic1.getId()));
-        assertTrue(getSubtasks.containsKey(subtask1.getId()));
-        assertTrue(getSubtasks.containsKey(subtask2.getId()));
-
-        HashMap<Integer, Subtask> getSubtaskEpic = epic1.getSubtasksMap();
-        assertTrue(getSubtaskEpic.containsKey(subtask1.getId()));
-        assertTrue(getSubtaskEpic.containsKey(subtask2.getId()));
-    }
-
-    @Test
-    public void getEmptyMapSubtasksByEpicId_WhenEpicNotExit() {
-        Epic epic1 = new Epic("epic1", "epic1epic1", manager.getNewId(), StatusTask.NEW, TypeTask.EPIC);
-        Subtask subtask1 = new Subtask("subtask1", "subtask1subtask1", manager.getNewId(), StatusTask.NEW, epic1.getId(), TypeTask.SUBTASK, "24.03.2025 12:00", 1);
-        Subtask subtask2 = new Subtask("subtask2", "subtask2subtask2", manager.getNewId(), StatusTask.NEW, epic1.getId(), TypeTask.SUBTASK, "20.03.2025 12:00", 30);
-        boolean isAddEpic1 = manager.addEpic(epic1);
-        boolean isAddSubtask1 = manager.addSubtask(subtask1);
-        boolean isAddSubtask2 = manager.addSubtask(subtask2);
-        assertTrue(isAddEpic1);
-        assertTrue(isAddSubtask1);
-        assertTrue(isAddSubtask2);
-
+    @DisplayName("Должен вернуть пустую Map-у, когда запрашиваем по не добавленному ID эпика его подзадачи")
+    public void getMapSubtasksByEpicId_getEmptyMapSubtasksByEpicId_WhenEpicNotExit() {
         int idNotExist = 787;
         Map<Integer, Subtask> mapSubtasksByEpicId = manager.getMapSubtasksByEpicId(idNotExist);
+
         assertTrue(mapSubtasksByEpicId.isEmpty());
     }
 
     @Test
-    public void getNotEmptyMapSubtasksByEpicId_WhenEpicExit() {
-        Epic epic1 = new Epic("epic1", "epic1epic1", manager.getNewId(), StatusTask.NEW, TypeTask.EPIC);
-        Subtask subtask1 = new Subtask("subtask1", "subtask1subtask1", manager.getNewId(), StatusTask.NEW, epic1.getId(), TypeTask.SUBTASK, "24.03.2025 12:00", 1);
-        Subtask subtask2 = new Subtask("subtask2", "subtask2subtask2", manager.getNewId(), StatusTask.NEW, epic1.getId(), TypeTask.SUBTASK, "20.03.2025 12:00", 30);
-        boolean isAddEpic1 = manager.addEpic(epic1);
-        boolean isAddSubtask1 = manager.addSubtask(subtask1);
-        boolean isAddSubtask2 = manager.addSubtask(subtask2);
-        assertTrue(isAddEpic1);
-        assertTrue(isAddSubtask1);
-        assertTrue(isAddSubtask2);
+    @DisplayName("Возвращаем не пустую Map-у определенного эпика по ID, когда и Эпик и его подзадачи добавлены")
+    public void getMapSubtasksByEpicId_getNotEmptyMapSubtasksByEpicId_WhenEpicExit() {
+        boolean isAddFirstEpic = manager.addEpic(firstEpic);
+        boolean isAddSubtaskNew = manager.addSubtask(subtaskNew);
+        boolean isAddSubtaskProgress = manager.addSubtask(subtaskProgress);
 
-        int idExist = epic1.getId();
+        int idExist = firstEpic.getId();
         Map<Integer, Subtask> mapSubtasksByEpicId = manager.getMapSubtasksByEpicId(idExist);
 
+        assertTrue(isAddFirstEpic);
+        assertTrue(isAddSubtaskNew);
+        assertTrue(isAddSubtaskProgress);
         assertFalse(mapSubtasksByEpicId.isEmpty());
-
-        assertTrue(mapSubtasksByEpicId.containsKey(subtask1.getId()));
-        assertTrue(mapSubtasksByEpicId.containsKey(subtask2.getId()));
+        assertTrue(mapSubtasksByEpicId.containsKey(subtaskNew.getId()));
+        assertTrue(mapSubtasksByEpicId.containsKey(subtaskProgress.getId()));
     }
 
     @Test
-    public void getEmptyMapSubtasksByEpicId_WhenEpicEmpty() {
-        Epic epic2 = new Epic("epic2", "epic2", manager.getNewId(), StatusTask.NEW, TypeTask.EPIC);
-        Subtask subtask1 = new Subtask("subtask1", "subtask1subtask1", manager.getNewId(), StatusTask.NEW, epic2.getId(), TypeTask.SUBTASK, "24.03.2025 12:00", 1);
-        Subtask subtask2 = new Subtask("subtask2", "subtask2subtask2", manager.getNewId(), StatusTask.NEW, epic2.getId(), TypeTask.SUBTASK, "20.03.2025 12:00", 30);
-        Epic epic1 = new Epic("epic1", "epic1epic1", manager.getNewId(), StatusTask.NEW, TypeTask.EPIC);
-        boolean isAddEpic2 = manager.addEpic(epic2);
-        boolean isAddSubtask1 = manager.addSubtask(subtask1);
-        boolean isAddSubtask2 = manager.addSubtask(subtask2);
-        boolean isAddEpic1 = manager.addEpic(epic1);
-        assertTrue(isAddEpic2 && isAddSubtask1 && isAddSubtask2 && isAddEpic1);
+    @DisplayName("Возвращает пустую Map-у подзадач определенного Эпика по ID, когда добавлен пустой Эпик")
+    public void getMapSubtasksByEpicId_getEmptyMapSubtasksByEpicId_WhenEpicEmpty() {
+        boolean isAddFirstEpic = manager.addEpic(firstEpic);
 
-        int idExist = epic1.getId();
+        int idExist = firstEpic.getId();
         Map<Integer, Subtask> mapSubtasksByEpicId = manager.getMapSubtasksByEpicId(idExist);
+
+        assertTrue(isAddFirstEpic);
         assertTrue(mapSubtasksByEpicId.isEmpty());
     }
 
     @Test
-    public void getHistoryManager() {
+    @DisplayName("Возвращает объект экземпляра класса HistoryManager")
+    public void getHistoryManager_returnHistoryManager() {
         HistoryManager historyManager = manager.getHistoryManager();
-        boolean notNull = Objects.nonNull(historyManager);
-        assertTrue(notNull);
 
+        boolean notNull = Objects.nonNull(historyManager);
         boolean isHistoryManager = historyManager instanceof HistoryManager;
+
+        assertTrue(notNull);
         assertTrue(isHistoryManager);
     }
 
     @Test
-    public void getEmptyListAllTasksEpicsSubtasks_WhenNotAddTaskEpicSubtask() {
-        Task task1 = new Task("task", "task1task1", manager.getNewId(), StatusTask.NEW, TypeTask.TASK, "21.03.2025 12:00", 1);
-        Epic epic1 = new Epic("epic1", "epic1epic1", manager.getNewId(), StatusTask.NEW, TypeTask.EPIC);
-        Subtask subtask1 = new Subtask("subtask1", "subtask1subtask1", manager.getNewId(), StatusTask.NEW, epic1.getId(), TypeTask.SUBTASK, "24.03.2025 12:00", 1);
-
+    @DisplayName("Должен вернуть пустой лист в котором должны были быть все задачи, Эпики и подзадачи, когда ничего не добавлено")
+    public void getAllTasksEpicSubtask_getEmptyListAllTasksEpicsSubtasks_WhenNotAddTaskEpicSubtask() {
         List<Task> listAllTaskEpicsSubtasks = manager.getAllTasksEpicSubtask();
+
         assertTrue(listAllTaskEpicsSubtasks.isEmpty());
     }
 
     @Test
-    public void getListAllTasksEpicsSubtasks_WhenEachOneAddTaskEpicSubtask() {
-        Task task1 = new Task("task", "task1task1", manager.getNewId(), StatusTask.NEW, TypeTask.TASK, "21.03.2025 12:00", 1);
-        Epic epic1 = new Epic("epic1", "epic1epic1", manager.getNewId(), StatusTask.NEW, TypeTask.EPIC);
-        Subtask subtask1 = new Subtask("subtask1", "subtask1subtask1", manager.getNewId(), StatusTask.NEW, epic1.getId(), TypeTask.SUBTASK, "24.03.2025 12:00", 1);
-        manager.addTask(task1);
-        manager.addEpic(epic1);
-        manager.addSubtask(subtask1);
+    @DisplayName("Должен вернуть лист в котором должны быть все задачи, Эпики и подзадачи, когда добавлены задачи, Эпики и подзадачи")
+    public void getAllTasksEpicSubtask_getNotEmptyListAllTasksEpicsSubtasks_WhenEachOneAddTaskEpicSubtask() {
+        manager.addTask(doneTask);
+        manager.addEpic(firstEpic);
+        manager.addSubtask(subtaskNew);
 
         List<Task> listAllTaskEpicsSubtasks = manager.getAllTasksEpicSubtask();
-        assertFalse(listAllTaskEpicsSubtasks.isEmpty());
 
-        assertTrue(listAllTaskEpicsSubtasks.contains(task1));
-        assertTrue(listAllTaskEpicsSubtasks.contains(epic1));
-        assertTrue(listAllTaskEpicsSubtasks.contains(subtask1));
+        assertFalse(listAllTaskEpicsSubtasks.isEmpty());
+        assertTrue(listAllTaskEpicsSubtasks.contains(doneTask));
+        assertTrue(listAllTaskEpicsSubtasks.contains(firstEpic));
+        assertTrue(listAllTaskEpicsSubtasks.contains(subtaskNew));
     }
 }

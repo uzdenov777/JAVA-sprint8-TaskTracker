@@ -6,11 +6,13 @@ import manager.enums.TypeTask;
 import manager.interfaces.TaskManager;
 import model.Epic;
 import model.Subtask;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 class EpicTest {
 
@@ -22,142 +24,156 @@ class EpicTest {
     }
 
     @Test
-    public void return0SubtasksEmpty() {
-        Epic epic = new Epic("epic1", "epic1epic1", manager.getNewId(), StatusTask.NEW, TypeTask.EPIC);
+    @DisplayName("Возвращает пустой список подзадач у Эпика сразу после момента добавления его")
+    public void returnMapSubtasksEmpty() {
+        Epic epicFirst = new Epic("epic1", "epic1epic1", manager.getNewId(), StatusTask.NEW, TypeTask.EPIC);
 
-        manager.addEpic(epic);
-        HashMap<Integer, Subtask> subtaskHashMap = epic.getSubtasksMap();
+        manager.addEpic(epicFirst);
+        HashMap<Integer, Subtask> subtaskHashMap = epicFirst.getSubtasksMap();
 
-        Assertions.assertEquals(0, subtaskHashMap.size());
+        assertTrue(subtaskHashMap.isEmpty());
     }
 
     @Test
+    @DisplayName("Проверяет что при добавлении подзадач со статусом NEW у эпика тоже будет статус NEW")
     public void returnNewStatusEpicAllSubtasksStatusNew() {
-        Epic epic = new Epic("epic1", "epic1epic1", manager.getNewId(), StatusTask.NEW, TypeTask.EPIC);
-        Subtask subtask1 = new Subtask("subtask1", "subtask1subtask1", manager.getNewId(), StatusTask.NEW, epic.getId(), TypeTask.SUBTASK, "24.03.2025 12:00", 1);
-        Subtask subtask2 = new Subtask("subtask2", "subtask2subtask2", manager.getNewId(), StatusTask.NEW, epic.getId(), TypeTask.SUBTASK, "20.03.2025 12:00", 30);
-        Subtask subtask3 = new Subtask("subtask3", "subtask3subtask3", manager.getNewId(), StatusTask.NEW, epic.getId(), TypeTask.SUBTASK, "27.03.2025 12:00", 30);
+        Epic epicFirst = new Epic("epic1", "epic1epic1", manager.getNewId(), StatusTask.NEW, TypeTask.EPIC);
+        Subtask subtaskOne = new Subtask("subtask1", "subtask1subtask1", manager.getNewId(), StatusTask.NEW, epicFirst.getId(), TypeTask.SUBTASK, "24.03.2025 12:00", 1);
+        Subtask subtaskTwo = new Subtask("clear", "subtask2subtask2", manager.getNewId(), StatusTask.NEW, epicFirst.getId(), TypeTask.SUBTASK, "20.03.2025 12:00", 30);
+        Subtask subtaskThree = new Subtask("subtask3", "subtask3subtask3", manager.getNewId(), StatusTask.NEW, epicFirst.getId(), TypeTask.SUBTASK, "27.03.2025 12:00", 30);
 
-        manager.addEpic(epic);
-        manager.addSubtask(subtask1);
-        manager.addSubtask(subtask2);
-        manager.addSubtask(subtask3);
+        manager.addEpic(epicFirst);
+        manager.addSubtask(subtaskOne);
+        manager.addSubtask(subtaskTwo);
+        manager.addSubtask(subtaskThree);
 
-        Assertions.assertEquals(StatusTask.NEW, epic.getStatus());
+        assertEquals(StatusTask.NEW, epicFirst.getStatus());
     }
 
     @Test
+    @DisplayName("Проверяет что при добавлении подзадач со статусом DONE у Эпика тоже будет статус DONE")
     public void returnDoneStatusEpicAllSubtasksStatusDone() {
-        Epic epic = new Epic("epic1", "epic1epic1", manager.getNewId(), StatusTask.NEW, TypeTask.EPIC);
-        Subtask subtask1 = new Subtask("subtask1", "subtask1subtask1", manager.getNewId(), StatusTask.DONE, epic.getId(), TypeTask.SUBTASK, "24.03.2025 12:00", 1);
-        Subtask subtask2 = new Subtask("subtask2", "subtask2subtask2", manager.getNewId(), StatusTask.DONE, epic.getId(), TypeTask.SUBTASK, "20.03.2025 12:00", 30);
-        Subtask subtask3 = new Subtask("subtask3", "subtask3subtask3", manager.getNewId(), StatusTask.DONE, epic.getId(), TypeTask.SUBTASK, "27.03.2025 12:00", 30);
+        Epic epicFirst = new Epic("epic1", "epic1epic1", manager.getNewId(), StatusTask.NEW, TypeTask.EPIC);
+        Subtask subtaskOne = new Subtask("subtask1", "subtask1subtask1", manager.getNewId(), StatusTask.DONE, epicFirst.getId(), TypeTask.SUBTASK, "24.03.2025 12:00", 1);
+        Subtask subtaskTwo = new Subtask("subtask2", "subtask2subtask2", manager.getNewId(), StatusTask.DONE, epicFirst.getId(), TypeTask.SUBTASK, "20.03.2025 12:00", 30);
+        Subtask subtaskThree = new Subtask("subtask3", "subtask3subtask3", manager.getNewId(), StatusTask.DONE, epicFirst.getId(), TypeTask.SUBTASK, "27.03.2025 12:00", 30);
 
-        manager.addEpic(epic);
-        manager.addSubtask(subtask1);
-        manager.addSubtask(subtask2);
-        manager.addSubtask(subtask3);
+        manager.addEpic(epicFirst);
+        manager.addSubtask(subtaskOne);
+        manager.addSubtask(subtaskTwo);
+        manager.addSubtask(subtaskThree);
 
-        Assertions.assertEquals(StatusTask.DONE, epic.getStatus());
+        assertEquals(StatusTask.DONE, epicFirst.getStatus());
     }
 
     @Test
+    @DisplayName("Проверяет что при добавлении подзадач со статусами NEW и DONE у Эпика будет статус IN_PROGRESS")
     public void returnInProgressStatusEpicAllSubtasksStatusNewAndDone() {
-        Epic epic = new Epic("epic1", "epic1epic1", manager.getNewId(), StatusTask.NEW, TypeTask.EPIC);
-        Subtask subtask1 = new Subtask("subtask1", "subtask1subtask1", manager.getNewId(), StatusTask.NEW, epic.getId(), TypeTask.SUBTASK, "24.03.2025 12:00", 1);
-        Subtask subtask2 = new Subtask("subtask2", "subtask2subtask2", manager.getNewId(), StatusTask.DONE, epic.getId(), TypeTask.SUBTASK, "20.03.2025 12:00", 30);
-        Subtask subtask3 = new Subtask("subtask3", "subtask3subtask3", manager.getNewId(), StatusTask.DONE, epic.getId(), TypeTask.SUBTASK, "27.03.2025 12:00", 30);
+        Epic epicFirst = new Epic("epic1", "epic1epic1", manager.getNewId(), StatusTask.NEW, TypeTask.EPIC);
+        Subtask subtaskOne = new Subtask("subtask1", "subtask1subtask1", manager.getNewId(), StatusTask.NEW, epicFirst.getId(), TypeTask.SUBTASK, "24.03.2025 12:00", 1);
+        Subtask subtaskTwo = new Subtask("subtask2", "subtask2subtask2", manager.getNewId(), StatusTask.DONE, epicFirst.getId(), TypeTask.SUBTASK, "20.03.2025 12:00", 30);
+        Subtask subtaskThree = new Subtask("subtask3", "subtask3subtask3", manager.getNewId(), StatusTask.DONE, epicFirst.getId(), TypeTask.SUBTASK, "27.03.2025 12:00", 30);
 
-        manager.addEpic(epic);
-        manager.addSubtask(subtask1);
-        manager.addSubtask(subtask2);
-        manager.addSubtask(subtask3);
+        manager.addEpic(epicFirst);
+        manager.addSubtask(subtaskOne);
+        manager.addSubtask(subtaskTwo);
+        manager.addSubtask(subtaskThree);
 
-        Assertions.assertEquals(StatusTask.IN_PROGRESS, epic.getStatus());
+        assertEquals(StatusTask.IN_PROGRESS, epicFirst.getStatus());
     }
 
     @Test
+    @DisplayName("Проверяет что при добавлении подзадач со статусом IN_PROGRESS у Эпика тоже будет статус IN_PROGRESS")
     public void returnInProgressStatusEpicAllSubtasksStatusInProgress() {
-        Epic epic = new Epic("epic1", "epic1epic1", manager.getNewId(), StatusTask.NEW, TypeTask.EPIC);
-        Subtask subtask1 = new Subtask("subtask1", "subtask1subtask1", manager.getNewId(), StatusTask.IN_PROGRESS, epic.getId(), TypeTask.SUBTASK, "24.03.2025 12:00", 1);
-        Subtask subtask2 = new Subtask("subtask2", "subtask2subtask2", manager.getNewId(), StatusTask.IN_PROGRESS, epic.getId(), TypeTask.SUBTASK, "20.03.2025 12:00", 30);
-        Subtask subtask3 = new Subtask("subtask3", "subtask3subtask3", manager.getNewId(), StatusTask.IN_PROGRESS, epic.getId(), TypeTask.SUBTASK, "19.03.2025 12:00", 30);
+        Epic epicFirst = new Epic("epic1", "epic1epic1", manager.getNewId(), StatusTask.NEW, TypeTask.EPIC);
+        Subtask subtaskOne = new Subtask("subtask1", "subtask1subtask1", manager.getNewId(), StatusTask.IN_PROGRESS, epicFirst.getId(), TypeTask.SUBTASK, "24.03.2025 12:00", 1);
+        Subtask subtaskTwo = new Subtask("subtask2", "subtask2subtask2", manager.getNewId(), StatusTask.IN_PROGRESS, epicFirst.getId(), TypeTask.SUBTASK, "20.03.2025 12:00", 30);
+        Subtask subtaskThree = new Subtask("subtask3", "subtask3subtask3", manager.getNewId(), StatusTask.IN_PROGRESS, epicFirst.getId(), TypeTask.SUBTASK, "19.03.2025 12:00", 30);
 
-        manager.addEpic(epic);
-        manager.addSubtask(subtask1);
-        manager.addSubtask(subtask2);
-        manager.addSubtask(subtask3);
+        manager.addEpic(epicFirst);
+        manager.addSubtask(subtaskOne);
+        manager.addSubtask(subtaskTwo);
+        manager.addSubtask(subtaskThree);
 
-        Assertions.assertEquals(StatusTask.IN_PROGRESS, epic.getStatus());
+        assertEquals(StatusTask.IN_PROGRESS, epicFirst.getStatus());
     }
 
     @Test
+    @DisplayName("Должен вернуть startTime у Пустого Эпика будет null")
     public void returnNullStartTimeEpicEmptySubtasks() {
-        Epic epic = new Epic("epic1", "epic1epic1", manager.getNewId(), StatusTask.NEW, TypeTask.EPIC);
+        Epic epicFirst = new Epic("epic1", "epic1epic1", manager.getNewId(), StatusTask.NEW, TypeTask.EPIC);
 
-        manager.addEpic(epic);
+        manager.addEpic(epicFirst);
 
-        Assertions.assertNull(epic.getStartTime());
+        assertNull(epicFirst.getStartTime());
     }
 
     @Test
+    @DisplayName("Должен вернуть startTime у Эпика такой же как у его самой ранней его подзадачи")
     public void returnNotNullStartTimeEpic() {
-        Epic epic = new Epic("epic1", "epic1epic1", manager.getNewId(), StatusTask.NEW, TypeTask.EPIC);
-        Subtask subtask1 = new Subtask("subtask1", "subtask1subtask1", manager.getNewId(),
-                StatusTask.IN_PROGRESS, epic.getId(), TypeTask.SUBTASK, "24.03.2025 12:00", 1);
+        Epic epicFirst = new Epic("epic1", "epic1epic1", manager.getNewId(), StatusTask.NEW, TypeTask.EPIC);
+        Subtask subtaskOne = new Subtask("subtask1", "subtask1subtask1", manager.getNewId(),
+                StatusTask.IN_PROGRESS, epicFirst.getId(), TypeTask.SUBTASK, "24.03.2025 12:00", 1);
 
-        manager.addEpic(epic);
-        manager.addSubtask(subtask1);
+        manager.addEpic(epicFirst);
+        manager.addSubtask(subtaskOne);
 
-        Assertions.assertNotNull(epic.getStartTime());
-        Assertions.assertEquals(epic.getStartTime(), subtask1.getStartTime());
-        Assertions.assertEquals("24.03.2025 12:00", epic.getStartTimeToString());
+        assertNotNull(epicFirst.getStartTime());
+        assertEquals(epicFirst.getStartTime(), subtaskOne.getStartTime());
+        assertEquals("24.03.2025 12:00", epicFirst.getStartTimeToString());
     }
 
     @Test
+    @DisplayName("Должен вернуть endTime у Пустого Эпика будет null")
     public void returnNullEndTimeEpicEmptySubtasks() {
-        Epic epic = new Epic("epic1", "epic1epic1", manager.getNewId(), StatusTask.NEW, TypeTask.EPIC);
+        Epic epicFirst = new Epic("epic1", "epic1epic1", manager.getNewId(), StatusTask.NEW, TypeTask.EPIC);
 
-        manager.addEpic(epic);
+        manager.addEpic(epicFirst);
 
-        Assertions.assertNull(epic.getEndTime());
+        assertNull(epicFirst.getEndTime());
     }
 
     @Test
+    @DisplayName("Должен вернуть endTime у Эпика такой же как у самой поздней его подзадачи")
     public void returnNotNullEndTimeEpic() {
-        Epic epic = new Epic("epic1", "epic1epic1", manager.getNewId(), StatusTask.NEW, TypeTask.EPIC);
-        Subtask subtask1 = new Subtask("subtask1", "subtask1subtask1", manager.getNewId(),
-                StatusTask.IN_PROGRESS, epic.getId(), TypeTask.SUBTASK, "24.03.2025 12:00", 1);
+        Epic epicFirst = new Epic("epic1", "epic1epic1", manager.getNewId(), StatusTask.NEW, TypeTask.EPIC);
+        Subtask subtaskOne = new Subtask("subtask1", "subtask1subtask1", manager.getNewId(),
+                StatusTask.IN_PROGRESS, epicFirst.getId(), TypeTask.SUBTASK, "24.03.2025 12:00", 1);
 
-        manager.addEpic(epic);
-        manager.addSubtask(subtask1);
+        manager.addEpic(epicFirst);
+        manager.addSubtask(subtaskOne);
 
-        Assertions.assertNotNull(epic.getEndTime());
-        Assertions.assertEquals(epic.getStartTime(), subtask1.getStartTime());
-        Assertions.assertEquals("24.03.2025 12:00", epic.getStartTimeToString());
+        assertNotNull(epicFirst.getEndTime());
+        assertEquals(epicFirst.getStartTime(), subtaskOne.getStartTime());
+        assertEquals("24.03.2025 12:00", epicFirst.getStartTimeToString());
     }
 
     @Test
+    @DisplayName("Должен вернуть duration 0 у Пустого эпика")
     public void returnDuration0EpicEmptySubtasks() {
-        Epic epic = new Epic("epic1", "epic1epic1", manager.getNewId(), StatusTask.NEW, TypeTask.EPIC);
+        Epic epicFirst = new Epic("epic1", "epic1epic1", manager.getNewId(), StatusTask.NEW, TypeTask.EPIC);
 
-        manager.addEpic(epic);
+        manager.addEpic(epicFirst);
 
-        Assertions.assertEquals(0, epic.getDurationToLong());
+        assertEquals(0, epicFirst.getDurationToLong());
     }
 
 
     @Test
+    @DisplayName("Должен вернуть duration 2 у Эпика, продолжительность = сумме продолжительности всех его подзадач")
     public void returnDuration1Epic() {
-        Epic epic = new Epic("epic1", "epic1epic1", manager.getNewId(), StatusTask.NEW, TypeTask.EPIC);
-        Subtask subtask1 = new Subtask("subtask1", "subtask1subtask1", manager.getNewId(),
-                StatusTask.IN_PROGRESS, epic.getId(), TypeTask.SUBTASK, "24.03.2025 12:00", 1);
+        Epic epicFirst = new Epic("epic1", "epic1epic1", manager.getNewId(), StatusTask.NEW, TypeTask.EPIC);
+        Subtask subtaskOne = new Subtask("subtask1", "subtask1subtask1", manager.getNewId(),
+                StatusTask.IN_PROGRESS, epicFirst.getId(), TypeTask.SUBTASK, "24.03.2025 12:00", 1);
+        Subtask subtaskTwo = new Subtask("subtask1", "subtask1subtask1", manager.getNewId(),
+                StatusTask.IN_PROGRESS, epicFirst.getId(), TypeTask.SUBTASK, "25.03.2025 12:00", 1);
 
-        manager.addEpic(epic);
-        manager.addSubtask(subtask1);
+        manager.addEpic(epicFirst);
+        manager.addSubtask(subtaskOne);
+        manager.addSubtask(subtaskTwo);
 
-        Assertions.assertEquals( subtask1.getDurationToLong(), epic.getDurationToLong());
-        Assertions.assertEquals(1, epic.getDurationToLong());
-        Assertions.assertEquals(1, subtask1.getDurationToLong());
+        assertEquals(2, epicFirst.getDurationToLong());
+        assertEquals(1, subtaskOne.getDurationToLong());
+        assertEquals(1, subtaskTwo.getDurationToLong());
     }
 }

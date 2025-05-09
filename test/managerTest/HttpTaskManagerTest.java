@@ -12,12 +12,12 @@ import model.Subtask;
 import model.Task;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 
 public class HttpTaskManagerTest extends TaskManagerTest<HttpTaskManager> {
@@ -36,85 +36,68 @@ public class HttpTaskManagerTest extends TaskManagerTest<HttpTaskManager> {
     }
 
     @Test
+    @DisplayName("Проверили что после запуска сервера манагера восстановилось все пустым ,потому что на сервер-хранилище не были еще доб задачи")
     public void shouldRestoreEmptyManagerIfNoTasksAdded() {
         List<Task> tasks = manager.getAllTasksEpicSubtask();
-        Assertions.assertEquals(0, tasks.size());
-
         List<Task> prioritizedTasks = manager.getPrioritizedTasks();
-        Assertions.assertEquals(0, prioritizedTasks.size());
-
         List<Task> history = manager.getHistory();
-        Assertions.assertEquals(0, history.size());
+
+        assertEquals(0, tasks.size());
+        assertEquals(0, prioritizedTasks.size());
+        assertEquals(0, history.size());
     }
 
     @Test
+    @DisplayName("Проверяет что после удаления всех задач ,манагер восстанавливается пустым")
     public void shouldRestoreEmptyManagerAfterDeletionOfAllTasks() {
-        Task task1 = new Task("task", "task1task1", manager.getNewId(), StatusTask.NEW, TypeTask.TASK, "21.03.2025 12:00", 1);
-        Epic epic1 = new Epic("epic1", "epic1epic1", manager.getNewId(), StatusTask.NEW, TypeTask.EPIC);
-        Subtask subtask1 = new Subtask("subtask1", "subtask1subtask1", manager.getNewId(), StatusTask.NEW, epic1.getId(), TypeTask.SUBTASK, "24.03.2025 12:00", 1);
-
-        manager.addTask(task1);
-        manager.addEpic(epic1);
-        manager.addSubtask(subtask1);
-        List<Task> allTasksEpicsSubtasks1 = manager.getAllTasksEpicSubtask();
-        Assertions.assertEquals(3, allTasksEpicsSubtasks1.size());
-
-        List<Task> prioritizedTasks = manager.getPrioritizedTasks();
-        Assertions.assertEquals(2, prioritizedTasks.size());//будет 2 потому что эпики у которых есть подзадачи в список приорит не попадает
-
-        manager.getTask(task1.getId());
-        manager.getEpic(epic1.getId());
-        manager.getSubtask(subtask1.getId());
-        List<Task> history = manager.getHistory();
-        Assertions.assertEquals(3, history.size());
-
+        Task taskFirst = new Task("task", "task1task1", manager.getNewId(), StatusTask.NEW, TypeTask.TASK, "21.03.2025 12:00", 1);
+        Epic epicNotEmpty = new Epic("epic1", "epic1epic1", manager.getNewId(), StatusTask.NEW, TypeTask.EPIC);
+        Subtask subtaskDone = new Subtask("subtask1", "subtask1subtask1", manager.getNewId(), StatusTask.DONE, epicNotEmpty.getId(), TypeTask.SUBTASK, "24.03.2025 12:00", 1);
+        manager.addTask(taskFirst);
+        manager.addEpic(epicNotEmpty);
+        manager.addSubtask(subtaskDone);
+        manager.getTask(taskFirst.getId());
+        manager.getEpic(epicNotEmpty.getId());
+        manager.getSubtask(subtaskDone.getId());
         manager.clearTasks();
         manager.clearSubtasks();
         manager.clearEpics();
-        List<Task> allTasksEpicsSubtasks2 = manager.getAllTasksEpicSubtask();
-        assertTrue(allTasksEpicsSubtasks2.isEmpty());
+        List<Task> allTasksEpicsSubtasksOld = manager.getAllTasksEpicSubtask();
 
-        TaskManager manager2 = Managers.getDefault(kvServerUrl);
+        TaskManager managerNew = Managers.getDefault(kvServerUrl);
+        List<Task> allTasksEpicsSubtasksNew = managerNew.getAllTasksEpicSubtask();
+        List<Task> prioritizedTasksNew = managerNew.getPrioritizedTasks();
+        List<Task> historyNEw = managerNew.getHistory();
 
-        List<Task> allTasksEpicsSubtasks3 = manager2.getAllTasksEpicSubtask();
-        assertTrue(allTasksEpicsSubtasks3.isEmpty());
-
-        List<Task> prioritizedTasks3 = manager2.getPrioritizedTasks();
-        Assertions.assertEquals(0, prioritizedTasks3.size());
-
-        List<Task> history3 = manager2.getHistory();
-        Assertions.assertEquals(0, history3.size());
+        assertTrue(allTasksEpicsSubtasksOld.isEmpty());
+        assertTrue(allTasksEpicsSubtasksNew.isEmpty());
+        assertEquals(0, prioritizedTasksNew.size());
+        assertEquals(0, historyNEw.size());
     }
 
     @Test
+    @DisplayName("Успешно восстанавливает ранее добавленные задачи")
     public void shouldRestoreAllPreviouslyAddedTasks() {
-        Task task1 = new Task("task", "task1task1", manager.getNewId(), StatusTask.NEW, TypeTask.TASK, "21.03.2025 12:00", 1);
-        Epic epic1 = new Epic("epic1", "epic1epic1", manager.getNewId(), StatusTask.NEW, TypeTask.EPIC);
-        Subtask subtask1 = new Subtask("subtask1", "subtask1subtask1", manager.getNewId(), StatusTask.NEW, epic1.getId(), TypeTask.SUBTASK, "24.03.2025 12:00", 1);
+        Task taskFirst = new Task("task", "task1task1", manager.getNewId(), StatusTask.NEW, TypeTask.TASK, "21.03.2025 12:00", 1);
+        Epic epicNotEmpty = new Epic("epic1", "epic1epic1", manager.getNewId(), StatusTask.NEW, TypeTask.EPIC);
+        Subtask subtaskDone = new Subtask("subtask1", "subtask1subtask1", manager.getNewId(), StatusTask.DONE, epicNotEmpty.getId(), TypeTask.SUBTASK, "24.03.2025 12:00", 1);
+        manager.addTask(taskFirst);
+        manager.addEpic(epicNotEmpty);
+        manager.addSubtask(subtaskDone);
+        manager.getTask(taskFirst.getId());
+        manager.getEpic(epicNotEmpty.getId());
+        manager.getSubtask(subtaskDone.getId());
+        List<Task> allTasksEpicsSubtasksOld = manager.getAllTasksEpicSubtask();
+        List<Task> prioritizedTasksOld = manager.getPrioritizedTasks();
+        List<Task> historyOld = manager.getHistory();
 
-        manager.addTask(task1);
-        manager.addEpic(epic1);
-        manager.addSubtask(subtask1);
-        List<Task> allTasksEpicsSubtasks1 = manager.getAllTasksEpicSubtask();
-        Assertions.assertEquals(3, allTasksEpicsSubtasks1.size());
+        TaskManager managerNew = Managers.getDefault(kvServerUrl);
+        List<Task> allTasksEpicsSubtasksNew = managerNew.getAllTasksEpicSubtask();
+        List<Task> prioritizedTasksNew = managerNew.getPrioritizedTasks();
+        List<Task> historyNew = managerNew.getHistory();
 
-        List<Task> prioritizedTasks = manager.getPrioritizedTasks();
-        Assertions.assertEquals(2, prioritizedTasks.size());//будет 2 потому что эпики у которых есть подзадачи в список приорит не попадает
-
-        manager.getTask(task1.getId());
-        manager.getEpic(epic1.getId());
-        manager.getSubtask(subtask1.getId());
-        List<Task> history = manager.getHistory();
-        Assertions.assertEquals(3, history.size());
-
-        TaskManager manager2 = Managers.getDefault(kvServerUrl);
-        List<Task> allTasksEpicsSubtasks3 = manager2.getAllTasksEpicSubtask();
-        assertFalse(allTasksEpicsSubtasks3.isEmpty());
-
-        List<Task> prioritizedTasks3 = manager2.getPrioritizedTasks();
-        Assertions.assertEquals(2, prioritizedTasks3.size());
-
-        List<Task> history3 = manager2.getHistory();
-        Assertions.assertEquals(3, history3.size());
+        assertEquals(allTasksEpicsSubtasksOld, allTasksEpicsSubtasksNew);
+        assertEquals(prioritizedTasksOld, prioritizedTasksNew);
+        assertEquals(historyNew, historyOld);
     }
 }

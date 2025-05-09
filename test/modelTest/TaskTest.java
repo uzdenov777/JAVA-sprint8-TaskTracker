@@ -7,10 +7,13 @@ import manager.interfaces.TaskManager;
 import model.Task;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 public class TaskTest {
 
@@ -22,101 +25,114 @@ public class TaskTest {
     }
 
     @Test
-    public void returnTrueIsAddTask() {
-        Task task = new Task("task", "task1task1", manager.getNewId(), StatusTask.NEW, TypeTask.TASK, "21.03.2025 12:00", 1);
-        boolean isAdd = manager.addTask(task);
+    @DisplayName("Должен успешно добавить задачу")
+    public void addTask_returnTrueIsAddTask() {
+        Task taskFirst = new Task("task", "task1task1", manager.getNewId(), StatusTask.NEW, TypeTask.TASK, "21.03.2025 12:00", 1);
 
-        Assertions.assertTrue(isAdd);
+        boolean isAdd = manager.addTask(taskFirst);
+
+        assertTrue(isAdd);
     }
 
     @Test
-    public void returnTrueIsTwoAddTaskWithTwoDifferentDates() {//Добавление двух разных задач с разными датами
-        Task task = new Task("task", "task1task1", manager.getNewId(), StatusTask.NEW, TypeTask.TASK, "21.03.2025 12:00", 1);
-        Task task2 = new Task("task2", "task2task2", manager.getNewId(), StatusTask.NEW, TypeTask.TASK, "20.03.2025 12:00", 30);
+    @DisplayName("Должен успешно добавить две задачи у которых нет пересечения")
+    public void addTask_returnTrueIsTwoAddTaskWithTwoDifferentDates() {//Добавление двух разных задач с разными датами
+        Task taskFirst = new Task("task", "task1task1", manager.getNewId(), StatusTask.NEW, TypeTask.TASK, "21.03.2025 12:00", 1);
+        Task taskOther = new Task("task2", "task2task2", manager.getNewId(), StatusTask.NEW, TypeTask.TASK, "20.03.2025 12:00", 30);
 
-        boolean isAdd = manager.addTask(task);
-        boolean isAdd2 = manager.addTask(task2);
-        Assertions.assertTrue(isAdd);
-        Assertions.assertTrue(isAdd2);
+        boolean isAddTaskFirst = manager.addTask(taskFirst);
+        boolean isAddTaskOther = manager.addTask(taskOther);
+
+        assertTrue(isAddTaskFirst);
+        assertTrue(isAddTaskOther);
     }
 
     @Test
-    public void returnTrueAndFalseIsTwoAddTask_WithTwoIdenticalDates() {//Пересечение
-        Task task = new Task("task", "task1task1", manager.getNewId(), StatusTask.NEW, TypeTask.TASK, "20.03.2025 12:00", 30);
-        Task task2 = new Task("task2", "task2task2", manager.getNewId(), StatusTask.NEW, TypeTask.TASK, "20.03.2025 12:10", 30);
+    @DisplayName("Не должен успешно добавить две задачи у которых есть пересечение")
+    public void addTask_returnTrueAndFalseIsTwoAddTask_WithTwoIdenticalDates() {//Пересечение
+        Task taskFirst = new Task("task", "task1task1", manager.getNewId(), StatusTask.NEW, TypeTask.TASK, "20.03.2025 12:00", 30);
+        Task taskOther = new Task("task2", "task2task2", manager.getNewId(), StatusTask.NEW, TypeTask.TASK, "20.03.2025 12:10", 30);
 
-        boolean isAdd = manager.addTask(task);
-        boolean isAdd2 = manager.addTask(task2);
+        boolean isAddTaskFirst = manager.addTask(taskFirst);
+        boolean isAddTaskOther = manager.addTask(taskOther);
 
-        Assertions.assertTrue(isAdd);
-        Assertions.assertFalse(isAdd2);
+        assertTrue(isAddTaskFirst);
+        assertFalse(isAddTaskOther);
     }
 
     @Test
-    public void returnFalseAddTaskTheSameID() {
+    @DisplayName("Нельзя добавить две задачи с одним ID")
+    public void addTask_returnFalseAddTaskTheSameID() {
         int id = manager.getNewId();
-        Task task = new Task("task", "task1task1", id, StatusTask.NEW, TypeTask.TASK, "20.03.2025 11:00", 1);
-        Task task2 = new Task("task2", "task2task2", id, StatusTask.NEW, TypeTask.TASK, "20.03.2025 12:00", 1);
+        Task taskFirst = new Task("task", "task1task1", id, StatusTask.NEW, TypeTask.TASK, "20.03.2025 11:00", 1);
+        Task taskOther = new Task("task2", "task2task2", id, StatusTask.NEW, TypeTask.TASK, "20.03.2025 12:00", 1);
 
-        boolean addTrue = manager.addTask(task);
-        boolean addFalse = manager.addTask(task2);
+        boolean isAddTaskFirst = manager.addTask(taskFirst);
+        boolean isAddTaskOther = manager.addTask(taskOther);
 
-        Assertions.assertTrue(addTrue);
-        Assertions.assertFalse(addFalse);
+        assertTrue(isAddTaskFirst);
+        assertFalse(isAddTaskOther);
     }
 
     @Test
+    @DisplayName("Не должен добавить задачу, в задачах и подзадачах продолжительность должна быть от 1 минуты")
     public void shouldThrowExceptionDuration0() {
         IllegalArgumentException exception = Assertions.assertThrows(IllegalArgumentException.class, () ->
                 new Task("task", "task1task1", manager.getNewId(), StatusTask.NEW, TypeTask.TASK, "21.03.2025 12:00", 0)
         );
 
-        Assertions.assertEquals("Продолжительность задачи принимается от 1 минуты.", exception.getMessage());
+        assertEquals("Продолжительность задачи принимается от 1 минуты.", exception.getMessage());
     }
 
     @Test
+    @DisplayName("Не должен добавить задачу, в задачах и подзадачах дата начала должна быть и валидный формат ДД.ММ.ГГГГ ЧЧ:ММ")
     public void shouldThrowExceptionDataNullAndInvalidFormat() {
         IllegalArgumentException exception = Assertions.assertThrows(IllegalArgumentException.class, () ->
                 new Task("task", "task1task1", manager.getNewId(), StatusTask.NEW, TypeTask.TASK, null, 1)
         );
-        Assertions.assertEquals("Передан неверный формат даты или null для Task и Subtask. Валидный формат для Task, Subtask -> ДД.ММ.ГГГГ ЧЧ:ММ", exception.getMessage());
-
         IllegalArgumentException exception1 = Assertions.assertThrows(IllegalArgumentException.class, () ->
                 new Task("task", "task1task1", manager.getNewId(), StatusTask.NEW, TypeTask.TASK, "2004.25.12", 1)
         );
-        Assertions.assertEquals("Передан неверный формат даты или null для Task и Subtask. Валидный формат для Task, Subtask -> ДД.ММ.ГГГГ ЧЧ:ММ", exception1.getMessage());
+
+        assertEquals("Передан неверный формат даты или null для Task и Subtask. Валидный формат для Task, Subtask -> ДД.ММ.ГГГГ ЧЧ:ММ", exception.getMessage());
+        assertEquals("Передан неверный формат даты или null для Task и Subtask. Валидный формат для Task, Subtask -> ДД.ММ.ГГГГ ЧЧ:ММ", exception1.getMessage());
     }
 
     @Test
-    public void return0AddAfterRemoveTask() {
-        Task task = new Task("task", "task1task1", manager.getNewId(), StatusTask.NEW, TypeTask.TASK, "20.03.2025 12:00", 1);
-        manager.addTask(task);
-        manager.removeTaskById(task.getId());
+    @DisplayName("Успешно удаляет заранее добавленную задачу по ID")
+    public void removeTaskById_returnEmptyLIstTasksAddAfterRemoveTask() {
+        Task taskFirst = new Task("task", "task1task1", manager.getNewId(), StatusTask.NEW, TypeTask.TASK, "20.03.2025 12:00", 1);
 
-        int size = manager.getListTasks().size();
+        manager.addTask(taskFirst);
+        manager.removeTaskById(taskFirst.getId());
+        List<Task> tasks = manager.getListTasks();
 
-        Assertions.assertEquals(0, size);
+        assertTrue(tasks.isEmpty());
     }
 
     @Test
-    public void returnSize0ClearTasks() {
-        Task task = new Task("task", "task1task1", manager.getNewId(), StatusTask.NEW, TypeTask.TASK, "20.03.2025 11:00", 1);
-        Task task2 = new Task("task2", "task2task2", manager.getNewId(), StatusTask.NEW, TypeTask.TASK, "20.03.2025 12:00", 1);
+    @DisplayName("Успешно очищает список всех заранее добавленную задач")
+    public void clearTasks_returnEmptyListAllTasks() {
+        Task taskFirst = new Task("task", "task1task1", manager.getNewId(), StatusTask.NEW, TypeTask.TASK, "20.03.2025 11:00", 1);
+        Task taskOther = new Task("task2", "task2task2", manager.getNewId(), StatusTask.NEW, TypeTask.TASK, "20.03.2025 12:00", 1);
 
-        manager.addTask(task);
-        manager.addTask(task2);
+        manager.addTask(taskFirst);
+        manager.addTask(taskOther);
         manager.clearTasks();
+        List<Task> tasks = manager.getListTasks();
 
-        int size = manager.getListTasks().size();
-        Assertions.assertEquals(0, size);
+        assertTrue(tasks.isEmpty());
     }
 
     @Test
+    @DisplayName("Проверяет правильно ли вычисляется окончание задачи = начала задача+продолжительность")
     public void returnEndTime2025_03_20T11_01() {
-        Task task = new Task("task", "task1task1", manager.getNewId(), StatusTask.NEW, TypeTask.TASK, "20.03.2025 11:00", 1);
-        manager.addTask(task);
-        LocalDateTime endTime = task.getEndTime();
-        LocalDateTime expectedEndTime = LocalDateTime.of(2025,3, 20, 11, 1);
-       Assertions.assertEquals(expectedEndTime, endTime);
+        Task taskFirst = new Task("task", "task1task1", manager.getNewId(), StatusTask.NEW, TypeTask.TASK, "20.03.2025 11:00", 1);
+
+        manager.addTask(taskFirst);
+        LocalDateTime endTime = taskFirst.getEndTime();
+        LocalDateTime expectedEndTime = LocalDateTime.of(2025, 3, 20, 11, 1);
+
+        assertEquals(expectedEndTime, endTime);
     }
 }

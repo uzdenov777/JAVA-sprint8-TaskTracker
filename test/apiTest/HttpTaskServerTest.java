@@ -13,6 +13,7 @@ import model.Subtask;
 import model.Task;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -26,14 +27,14 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class HttpTaskServerTest {
-    KVServer kvServer = new KVServer();
-    HttpTaskServer httpTaskServer;
-    String taskServerUrl = "http://localhost:8080";
-    String API_TOKEN;
-    HttpTaskManager taskManager;
+    private final KVServer kvServer = new KVServer();
+    private HttpTaskServer httpTaskServer;
+    private final String taskServerUrl = "http://localhost:8080";
+    private String API_TOKEN;
+    private HttpTaskManager taskManager;
 
-    HttpClient httpClient = HttpClient.newHttpClient();
-    Gson gson = CreateGson.createGson();
+    private final HttpClient httpClient = HttpClient.newHttpClient();
+    private final Gson gson = CreateGson.createGson();
 
     @BeforeEach
     public void startServers() {
@@ -72,7 +73,8 @@ public class HttpTaskServerTest {
     }
 
     @Test
-    public void getStatusCode2_ValidPathRegister() {
+    @DisplayName("Отправляем запрос на сервер для регистрацию GET эндпоинт http://localhost:8080/register")
+    public void getStatusCode200_ValidPathRegister() {
         try {
             URI uri = URI.create(taskServerUrl + "/register");
             HttpRequest request = HttpRequest.newBuilder().uri(uri).build();
@@ -85,6 +87,7 @@ public class HttpTaskServerTest {
     }
 
     @Test
+    @DisplayName("Отправляем запрос на сервер для получения всех задач, энд.-GET /tasks/task?API_TOKEN=***")
     public void returnListAllTasks_StatusCode200() {
         try {
             URI uri = URI.create(taskServerUrl + "/tasks/task" + "?API_TOKEN=" + API_TOKEN);
@@ -98,6 +101,7 @@ public class HttpTaskServerTest {
     }
 
     @Test
+    @DisplayName("Отправляем запрос на сервер для получения всех Эпиков, энд.-GET /tasks/epic?API_TOKEN=***")
     public void returnListAllEpics_StatusCode200() {
         try {
             URI uri = URI.create(taskServerUrl + "/tasks/epic" + "?API_TOKEN=" + API_TOKEN);
@@ -111,6 +115,7 @@ public class HttpTaskServerTest {
     }
 
     @Test
+    @DisplayName("Отправляем запрос на сервер для получения всех подзадач, энд.-GET /tasks/subtask?API_TOKEN=***")
     public void returnListAllSubtask_StatusCode200() {
         try {
             URI uri = URI.create(taskServerUrl + "/tasks/subtask" + "?API_TOKEN=" + API_TOKEN);
@@ -124,6 +129,7 @@ public class HttpTaskServerTest {
     }
 
     @Test
+    @DisplayName("Отправляем запрос на сервер для получения несущ. задачи по ID, энд.-GET /tasks/task?API_TOKEN=***&id=idTask")
     public void returnTaskById_StatusCode404_NotAddingTask() {
         try {
             int idTask = 1;
@@ -140,6 +146,7 @@ public class HttpTaskServerTest {
     }
 
     @Test
+    @DisplayName("Отправляем запрос на сервер для получения несущ. Эпик по ID, энд.-GET /tasks/epic?API_TOKEN=***&id=epicId")
     public void returnEpicById_StatusCode404_NotAddingEpic() {
         try {
             int epicId = 1;
@@ -156,6 +163,7 @@ public class HttpTaskServerTest {
     }
 
     @Test
+    @DisplayName("Отправляем запрос на сервер для получения несущ. подзадачи по ID, энд.-GET /tasks/subtask?API_TOKEN=***&id=subtaskId")
     public void returnSubtaskById_StatusCode404_NotAddingSubtask() {
         try {
             int subtaskId = 1;
@@ -172,11 +180,11 @@ public class HttpTaskServerTest {
     }
 
     @Test
-    public void returnTaskEpicSubtaskById_StatusCode200_AddingTaskEpicSubtask() {
+    @DisplayName("Отправляем запрос на сервер для получения задачи по ID, энд.-GET /tasks/task?API_TOKEN=***&id=taskId")
+    public void returnTaskById_StatusCode200_AddingTask() {
         fillTaskManager();
         try {
             int taskId = 1;
-
             URI uri = URI.create(taskServerUrl + "/tasks/task" + "?API_TOKEN=" + API_TOKEN + "&id=" + taskId);
             HttpRequest request = HttpRequest.newBuilder().uri(uri).GET().build();
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
@@ -184,44 +192,8 @@ public class HttpTaskServerTest {
 
             Task taskResponse = gson.fromJson(body, Task.class);
             Task taskGetManager = taskManager.getTask(taskId).get();
-
             int statusCode = response.statusCode();
-            assertEquals(200, statusCode);
-            assertEquals(taskResponse, taskGetManager);
-        } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
-        }
 
-        try {
-            int epicId = 2;
-
-            URI uri = URI.create(taskServerUrl + "/tasks/epic" + "?API_TOKEN=" + API_TOKEN + "&id=" + epicId);
-            HttpRequest request = HttpRequest.newBuilder().uri(uri).GET().build();
-            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-            String body = response.body();
-
-            Epic taskResponse = gson.fromJson(body, Epic.class);
-            Epic taskGetManager = taskManager.getEpic(epicId).get();
-
-            int statusCode = response.statusCode();
-            assertEquals(200, statusCode);
-            assertEquals(taskResponse, taskGetManager);
-        } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
-        }
-
-        try {
-            int subtaskId = 3;
-
-            URI uri = URI.create(taskServerUrl + "/tasks/subtask" + "?API_TOKEN=" + API_TOKEN + "&id=" + subtaskId);
-            HttpRequest request = HttpRequest.newBuilder().uri(uri).GET().build();
-            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-            String body = response.body();
-
-            Subtask taskResponse = gson.fromJson(body, Subtask.class);
-            Subtask taskGetManager = taskManager.getSubtask(subtaskId).get();
-
-            int statusCode = response.statusCode();
             assertEquals(200, statusCode);
             assertEquals(taskResponse, taskGetManager);
         } catch (IOException | InterruptedException e) {
@@ -230,14 +202,54 @@ public class HttpTaskServerTest {
     }
 
     @Test
+    @DisplayName("Отправляем запрос на сервер для получения Эпика по ID, энд.-GET /tasks/epic?API_TOKEN=***&id=epicId")
+    public void returnEpicById_StatusCode200_AddingEpic() {
+        fillTaskManager();
+ try {
+            int epicId = 2;
+            URI uri = URI.create(taskServerUrl + "/tasks/epic" + "?API_TOKEN=" + API_TOKEN + "&id=" + epicId);
+            HttpRequest request = HttpRequest.newBuilder().uri(uri).GET().build();
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            String body = response.body();
+
+            Epic taskResponse = gson.fromJson(body, Epic.class);
+            Epic taskGetManager = taskManager.getEpic(epicId).get();
+            int statusCode = response.statusCode();
+
+            assertEquals(200, statusCode);
+            assertEquals(taskResponse, taskGetManager);
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    @DisplayName("Отправляем запрос на сервер для получения подзадачи по ID, энд.-GET /tasks/subtask?API_TOKEN=***&id=subtaskId")
+    public void returnSubtaskById_StatusCode200_AddingSubtask() {
+        fillTaskManager();
+        try {
+            int subtaskId = 3;
+            URI uri = URI.create(taskServerUrl + "/tasks/subtask" + "?API_TOKEN=" + API_TOKEN + "&id=" + subtaskId);
+            HttpRequest request = HttpRequest.newBuilder().uri(uri).GET().build();
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            String body = response.body();
+
+            Subtask taskResponse = gson.fromJson(body, Subtask.class);
+            Subtask taskGetManager = taskManager.getSubtask(subtaskId).get();
+            int statusCode = response.statusCode();
+
+            assertEquals(200, statusCode);
+            assertEquals(taskResponse, taskGetManager);
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    @DisplayName("Отправляем запрос на сервер для добавления или обновления задачи, эндп.-POST+taskToJson /tasks/task?API_TOKEN=***")
     public void returnStatusCode200_POST_AddingTaskEpicSubtask() {
         Task task = new Task("task", "task1task1", 1, StatusTask.NEW, TypeTask.TASK, "21.03.2025 12:00", 1);
-        Epic epic = new Epic("epic1", "epic1epic1", 2, StatusTask.NEW, TypeTask.EPIC);
-        Subtask subtask = new Subtask("subtask1", "subtask1subtask1", 3, StatusTask.NEW, epic.getId(), TypeTask.SUBTASK, "24.03.2025 12:00", 1);
-
         String taskJson = gson.toJson(task);
-        String epicJson = gson.toJson(epic);
-        String subtaskJson = gson.toJson(subtask);
 
         try {
             URI uri = URI.create(taskServerUrl + "/tasks/task" + "?API_TOKEN=" + API_TOKEN);
@@ -249,6 +261,13 @@ public class HttpTaskServerTest {
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
+    }
+
+    @Test
+    @DisplayName("Отправляем запрос на сервер для добавления или обновления Эпика, эндп.-POST+epicToJson /tasks/epic?API_TOKEN=***")
+    public void returnStatusCode200_POST_AddingEpic() {
+        Epic epic = new Epic("epic1", "epic1epic1", 2, StatusTask.NEW, TypeTask.EPIC);
+        String epicJson = gson.toJson(epic);
 
         try {
             URI uri = URI.create(taskServerUrl + "/tasks/epic" + "?API_TOKEN=" + API_TOKEN);
@@ -260,7 +279,17 @@ public class HttpTaskServerTest {
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
+    }
 
+
+    @Test
+    @DisplayName("Отправляем запрос на сервер для добавления или обновления подзадачи, эндп.-POST+subtaskToJson /tasks/subtask?API_TOKEN=***")
+    public void returnStatusCode200_POST_AddingSubtask() {
+        Epic epic = new Epic("epic1", "epic1epic1", 2, StatusTask.NEW, TypeTask.EPIC);
+        Subtask subtask = new Subtask("subtask1", "subtask1subtask1", 3, StatusTask.NEW, epic.getId(), TypeTask.SUBTASK, "24.03.2025 12:00", 1);
+
+        taskManager.addEpic(epic);
+        String subtaskJson = gson.toJson(subtask);
         try {
             URI uri = URI.create(taskServerUrl + "/tasks/subtask" + "?API_TOKEN=" + API_TOKEN);
             HttpRequest request = HttpRequest.newBuilder().uri(uri).POST(HttpRequest.BodyPublishers.ofString(subtaskJson)).build();
@@ -274,7 +303,8 @@ public class HttpTaskServerTest {
     }
 
     @Test
-    public void returnStatusCode200_DELETE_ClearAll_Task_Epic_Subtask() {
+    @DisplayName("Отправляем запрос на сервер для удаления всех задач, эндп.-DELETE /tasks/task?API_TOKEN=***")
+    public void returnStatusCode200_DELETE_ClearAllTasks() {
         fillTaskManager();
         try {
             URI uri = URI.create(taskServerUrl + "/tasks/task" + "?API_TOKEN=" + API_TOKEN);
@@ -286,7 +316,12 @@ public class HttpTaskServerTest {
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
+    }
 
+    @Test
+    @DisplayName("Отправляем запрос на сервер для удаления все Эпики, эндп.-DELETE /tasks/epic?API_TOKEN=***")
+    public void returnStatusCode200_DELETE_ClearAllEpics() {
+        fillTaskManager();
         try {
             URI uri = URI.create(taskServerUrl + "/tasks/epic" + "?API_TOKEN=" + API_TOKEN);
             HttpRequest request = HttpRequest.newBuilder().uri(uri).DELETE().build();
@@ -297,7 +332,12 @@ public class HttpTaskServerTest {
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
+    }
 
+    @Test
+    @DisplayName("Отправляем запрос на сервер для удаления всех подзадач, эндп.-DELETE /tasks/subtask?API_TOKEN=***")
+    public void returnStatusCode200_DELETE_ClearAllSubtasks() {
+        fillTaskManager();
         try {
             URI uri = URI.create(taskServerUrl + "/tasks/subtask" + "?API_TOKEN=" + API_TOKEN);
             HttpRequest request = HttpRequest.newBuilder().uri(uri).DELETE().build();
@@ -311,7 +351,8 @@ public class HttpTaskServerTest {
     }
 
     @Test
-    public void returnStatusCode404_DELETE_removeByIDTask_Epic_Subtask_NotExistID() {
+    @DisplayName("Отправляем запрос на сервер для удаления не сущ. задачи по ID, эндп.-DELETE /tasks/task?API_TOKEN=***&id=idTask")
+    public void returnStatusCode404_DELETE_removeByIDTask_NotExistID() {
         int notExistID = 777;
         try {
             URI uri = URI.create(taskServerUrl + "/tasks/task" + "?API_TOKEN=" + API_TOKEN + "&id=" + notExistID);
@@ -325,7 +366,12 @@ public class HttpTaskServerTest {
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
+    }
 
+    @Test
+    @DisplayName("Отправляем запрос на сервер для удаления не сущ. Эпика по ID, эндп.-DELETE /tasks/epic?API_TOKEN=***&id=notExistID")
+    public void returnStatusCode404_DELETE_removeByIDEpic_NotExistID() {
+        int notExistID = 777;
         try {
             URI uri = URI.create(taskServerUrl + "/tasks/epic" + "?API_TOKEN=" + API_TOKEN + "&id=" + notExistID);
             HttpRequest request = HttpRequest.newBuilder().uri(uri).DELETE().build();
@@ -338,7 +384,12 @@ public class HttpTaskServerTest {
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
+    }
 
+    @Test
+    @DisplayName("Отправляем запрос на сервер для удаления не сущ. подзадачи по ID, эндп.-DELETE /tasks/subtask?API_TOKEN=***&id=notExistID")
+    public void returnStatusCode404_DELETE_removeByIDSubtask_NotExistID() {
+        int notExistID = 777;
         try {
             URI uri = URI.create(taskServerUrl + "/tasks/subtask" + "?API_TOKEN=" + API_TOKEN + "&id=" + notExistID);
             HttpRequest request = HttpRequest.newBuilder().uri(uri).DELETE().build();
@@ -354,7 +405,8 @@ public class HttpTaskServerTest {
     }
 
     @Test
-    public void returnStatusCode200_DELETE_removeByIDTask_Epic_Subtask_ExistID() {
+    @DisplayName("Отправляем запрос на сервер для удаления задачи по ID, эндп.-DELETE /tasks/task?API_TOKEN=***&id=idTask")
+    public void returnStatusCode200_DELETE_removeByIDTask_ExistID() {
         fillTaskManager();
         try {
             int idTask = 1;
@@ -369,7 +421,12 @@ public class HttpTaskServerTest {
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
+    }
 
+    @Test
+    @DisplayName("Отправляем запрос на сервер для удаления подзадачи по ID, эндп.-DELETE /tasks/subtask?API_TOKEN=***&id=idSubtask")
+    public void returnStatusCode200_DELETE_removeByIDSubtask_ExistID() {
+        fillTaskManager();
         try {
             int idSubtask = 3;
             URI uri = URI.create(taskServerUrl + "/tasks/subtask" + "?API_TOKEN=" + API_TOKEN + "&id=" + idSubtask);
@@ -383,7 +440,12 @@ public class HttpTaskServerTest {
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
+    }
 
+    @Test
+    @DisplayName("Отправляем запрос на сервер для удаления Эпика по ID, эндп.-DELETE /tasks/epic?API_TOKEN=***&id=idEpic")
+    public void returnStatusCode200_DELETE_removeByIDEpic_ExistID() {
+        fillTaskManager();
         try {
             int idEpic = 2;
             URI uri = URI.create(taskServerUrl + "/tasks/epic" + "?API_TOKEN=" + API_TOKEN + "&id=" + idEpic);
@@ -400,6 +462,7 @@ public class HttpTaskServerTest {
     }
 
     @Test
+    @DisplayName("Отправляем запрос на сервер для для получения листа с подзадачами определенного Эпика по пути GET /tasks/epic/subtask?API_TOKEN=***&id=idEpic")
     public void returnEpicSubtaskListByID_StatusCode200() {
         fillTaskManager();
         try {
@@ -423,6 +486,7 @@ public class HttpTaskServerTest {
     }
 
     @Test
+    @DisplayName("Отправляем запрос на сервер для получения листа с историей по пути GET /tasks/history")
     public void returnHistoryList_StatusCode200() {
         fillTaskManager();
 
@@ -446,6 +510,7 @@ public class HttpTaskServerTest {
     }
 
     @Test
+    @DisplayName("Отправляем запрос на сервер для получения листа с приоритетами по пути GET /tasks")
     public void returnPrioritizedTaskList_StatusCode200() {
         fillTaskManager();
 
@@ -469,6 +534,7 @@ public class HttpTaskServerTest {
     }
 
     @Test
+    @DisplayName("Отправляем запрос на сервер не сущ. путь tasks/main, получаем 503")
     public void returnStatusCode503() {
         try {
             URI uri = URI.create(taskServerUrl + "/tasks/main" + "?API_TOKEN=" + API_TOKEN);

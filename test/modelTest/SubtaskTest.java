@@ -8,9 +8,13 @@ import model.Epic;
 import model.Subtask;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 public class SubtaskTest {
     TaskManager manager;
@@ -24,115 +28,126 @@ public class SubtaskTest {
     }
 
     @Test
-    public void returnTrueIsAddTask() {
-        Subtask subtask1 = new Subtask("subtask1", "subtask1subtask1", manager.getNewId(), StatusTask.NEW, epic.getId(), TypeTask.SUBTASK, "24.03.2025 12:00", 1);
+    @DisplayName("Должен успешно добавить подзадачу")
+    public void addSubtask_returnTrueIsAddSubtask() {
+        Subtask subtaskFirst = new Subtask("subtask1", "subtask1subtask1", manager.getNewId(), StatusTask.NEW, epic.getId(), TypeTask.SUBTASK, "24.03.2025 12:00", 1);
 
-        boolean isAdd = manager.addSubtask(subtask1);
+        boolean isAddSubtaskFirst = manager.addSubtask(subtaskFirst);
 
-        Assertions.assertTrue(isAdd);
+        assertTrue(isAddSubtaskFirst);
     }
 
     @Test
-    public void returnTrueIsTwoAddTaskWithTwoDifferentDates() {
-        Subtask subtask1 = new Subtask("subtask1", "subtask1subtask1", manager.getNewId(), StatusTask.NEW, epic.getId(), TypeTask.SUBTASK, "24.03.2025 12:00", 1);
-        Subtask subtask2 = new Subtask("subtask2", "subtask2subtask2", manager.getNewId(), StatusTask.NEW, epic.getId(), TypeTask.SUBTASK, "20.03.2025 12:00", 30);
+    @DisplayName("Должно успешно добавить две подзадачи без пересечения")
+    public void addSubtask_returnTrueIsTwoAddSubtaskWithTwoDifferentDates() {
+        Subtask subtaskFirst = new Subtask("subtask1", "subtask1subtask1", manager.getNewId(), StatusTask.NEW, epic.getId(), TypeTask.SUBTASK, "24.03.2025 12:00", 1);
+        Subtask subtaskOther = new Subtask("subtask2", "subtask2subtask2", manager.getNewId(), StatusTask.NEW, epic.getId(), TypeTask.SUBTASK, "20.03.2025 12:00", 30);
 
-        boolean isAdd = manager.addSubtask(subtask1);
-        boolean isAdd2 = manager.addSubtask(subtask2);
-        Assertions.assertTrue(isAdd);
-        Assertions.assertTrue(isAdd2);
+        boolean isAddSubtaskFirst = manager.addSubtask(subtaskFirst);
+        boolean isAddSubtaskOther = manager.addSubtask(subtaskOther);
+
+        assertTrue(isAddSubtaskFirst);
+        assertTrue(isAddSubtaskOther);
     }
 
     @Test
-    public void returnTrueAndFalseIsTwoAddTaskWithTwoIdenticalDates() {
-        Subtask subtask1 = new Subtask("subtask1", "subtask1subtask1", manager.getNewId(), StatusTask.NEW, epic.getId(), TypeTask.SUBTASK, "20.03.2025 12:00", 1);
-        Subtask subtask2 = new Subtask("subtask2", "subtask2subtask2", manager.getNewId(), StatusTask.NEW, epic.getId(), TypeTask.SUBTASK, "20.03.2025 12:00", 30);
+    @DisplayName("должно успешно добавить subtaskFirst ,а subtaskOther не получиться из-за пересечения")
+    public void addSubtask_returnTrueAndFalseIsTwoAddSubtaskWithTwoIdenticalDates() {
+        Subtask subtaskFirst = new Subtask("subtask1", "subtask1subtask1", manager.getNewId(), StatusTask.NEW, epic.getId(), TypeTask.SUBTASK, "20.03.2025 12:00", 1);
+        Subtask subtaskOther = new Subtask("subtask2", "subtask2subtask2", manager.getNewId(), StatusTask.NEW, epic.getId(), TypeTask.SUBTASK, "20.03.2025 12:00", 30);
 
-        boolean isAdd = manager.addSubtask(subtask1);
-        boolean isAdd2 = manager.addSubtask(subtask2);
+        boolean isAddSubtaskFirst = manager.addSubtask(subtaskFirst);
+        boolean isAddSubtaskOther = manager.addSubtask(subtaskOther);
 
-        Assertions.assertTrue(isAdd);
-        Assertions.assertFalse(isAdd2);
+        assertTrue(isAddSubtaskFirst);
+        assertFalse(isAddSubtaskOther);
     }
 
     @Test
-    public void returnFalseAddTaskTheSameID() {
+    @DisplayName("Не должен добавить subtaskOther, потому что ID уже занят subtaskFirst")
+    public void addSubtask_returnFalseAddSubtaskTheSameID() {
         int id = manager.getNewId();
-        Subtask subtask1 = new Subtask("subtask1", "subtask1subtask1", id, StatusTask.NEW, epic.getId(), TypeTask.SUBTASK, "20.03.2025 12:00", 1);
-        Subtask subtask2 = new Subtask("subtask2", "subtask2subtask2", id, StatusTask.NEW, epic.getId(), TypeTask.SUBTASK, "20.03.2025 12:00", 30);
+        Subtask subtaskFirst = new Subtask("subtask1", "subtask1subtask1", id, StatusTask.NEW, epic.getId(), TypeTask.SUBTASK, "20.03.2025 12:00", 1);
+        Subtask subtaskOther = new Subtask("subtask2", "subtask2subtask2", id, StatusTask.NEW, epic.getId(), TypeTask.SUBTASK, "20.03.2025 12:00", 30);
 
-        boolean addTrue = manager.addSubtask(subtask1);
-        boolean addFalse = manager.addSubtask(subtask2);
+        boolean isAddSubtaskFirst = manager.addSubtask(subtaskFirst);
+        boolean isAddSubtaskOther = manager.addSubtask(subtaskOther);
 
-        Assertions.assertTrue(addTrue);
-        Assertions.assertFalse(addFalse);
+        Assertions.assertTrue(isAddSubtaskFirst);
+        assertFalse(isAddSubtaskOther);
     }
 
     @Test
+    @DisplayName("Не должен даже инициализировать подзадачу пока ее продолжительность меньше минуты")
     public void shouldThrowExceptionDuration0() {
         IllegalArgumentException exception = Assertions.assertThrows(IllegalArgumentException.class, () ->
                 new Subtask("subtask1", "subtask1subtask1", manager.getNewId(), StatusTask.NEW, epic.getId(), TypeTask.SUBTASK, "20.03.2025 12:00", 0)
         );
 
-        Assertions.assertEquals("Продолжительность задачи принимается от 1 минуты.", exception.getMessage());
+        assertEquals("Продолжительность задачи принимается от 1 минуты.", exception.getMessage());
     }
 
     @Test
+    @DisplayName("Не должен даже инициализировать подзадачи пока неверный формат или отсутствует дата старта подзадачи ,валидный формат для Task, Subtask -> ДД.ММ.ГГГГ ЧЧ:ММ")
     public void shouldThrowExceptionDataNullAndInvalidFormat() {
         IllegalArgumentException exception = Assertions.assertThrows(IllegalArgumentException.class, () ->
                 new Subtask("subtask1", "subtask1subtask1", manager.getNewId(), StatusTask.NEW, epic.getId(), TypeTask.SUBTASK, null, 1)
         );
-        Assertions.assertEquals("Передан неверный формат даты или null для Task и Subtask. Валидный формат для Task, Subtask -> ДД.ММ.ГГГГ ЧЧ:ММ", exception.getMessage());
-
         IllegalArgumentException exception1 = Assertions.assertThrows(IllegalArgumentException.class, () ->
                 new Subtask("subtask1", "subtask1subtask1", manager.getNewId(), StatusTask.NEW, epic.getId(), TypeTask.SUBTASK, "2004.25.12", 1)
         );
-        Assertions.assertEquals("Передан неверный формат даты или null для Task и Subtask. Валидный формат для Task, Subtask -> ДД.ММ.ГГГГ ЧЧ:ММ", exception1.getMessage());
+
+        assertEquals("Передан неверный формат даты или null для Task и Subtask. Валидный формат для Task, Subtask -> ДД.ММ.ГГГГ ЧЧ:ММ", exception.getMessage());
+        assertEquals("Передан неверный формат даты или null для Task и Subtask. Валидный формат для Task, Subtask -> ДД.ММ.ГГГГ ЧЧ:ММ", exception1.getMessage());
     }
 
     @Test
-    public void return0AddAfterRemoveTask() {
-        Subtask subtask1 = new Subtask("subtask1", "subtask1subtask1", manager.getNewId(), StatusTask.NEW, epic.getId(), TypeTask.SUBTASK, "20.03.2025 12:00", 1);
+    @DisplayName("Должен успешно удалить подзадачу по ID, которая ранее была добавлена")
+    public void removeSubtaskById_returnEmptyListAllSubtasks_addedAfterRemoveSubtask() {
+        Subtask subtaskFirst = new Subtask("subtask1", "subtask1subtask1", manager.getNewId(), StatusTask.NEW, epic.getId(), TypeTask.SUBTASK, "20.03.2025 12:00", 1);
 
-        manager.addSubtask(subtask1);
-        manager.removeSubtaskById(subtask1.getId());
+        manager.addSubtask(subtaskFirst);
+        manager.removeSubtaskById(subtaskFirst.getId());
+        List<Subtask> subtasks = manager.getListSubtasks();
 
-        int size = manager.getListSubtasks().size();
-
-        Assertions.assertEquals(0, size);
+        assertTrue(subtasks.isEmpty());
     }
 
     @Test
-    public void returnSize0ClearTasks() {
-        Subtask subtask1 = new Subtask("subtask1", "subtask1subtask1", manager.getNewId(), StatusTask.NEW, epic.getId(), TypeTask.SUBTASK, "24.03.2025 12:00", 1);
-        Subtask subtask2 = new Subtask("subtask2", "subtask2subtask2", manager.getNewId(), StatusTask.NEW, epic.getId(), TypeTask.SUBTASK, "20.03.2025 12:00", 30);
+    @DisplayName("Должен очистить полностью список всех подзадач")
+    public void clearSubtasks_returnEmptyListAllSubtasks() {
+        Subtask subtaskFirst = new Subtask("subtask1", "subtask1subtask1", manager.getNewId(), StatusTask.NEW, epic.getId(), TypeTask.SUBTASK, "24.03.2025 12:00", 1);
+        Subtask subtaskOther = new Subtask("subtask2", "subtask2subtask2", manager.getNewId(), StatusTask.NEW, epic.getId(), TypeTask.SUBTASK, "20.03.2025 12:00", 30);
 
-
-        manager.addSubtask(subtask1);
-        manager.addSubtask(subtask2);
+        manager.addSubtask(subtaskFirst);
+        manager.addSubtask(subtaskOther);
         manager.clearSubtasks();
 
-        int size = manager.getListTasks().size();
-        Assertions.assertEquals(0, size);
+        List<Subtask> subtasks = manager.getListSubtasks();
+        assertTrue(subtasks.isEmpty());
     }
 
     @Test
+    @DisplayName("Проверяет правильно ли вычисляется окончание подзадачи, окончание = дата начала+продолжительность")
     public void returnEndTime2025_03_20T11_01() {
-        Subtask subtask1 = new Subtask("subtask1", "subtask1subtask1", manager.getNewId(), StatusTask.NEW, epic.getId(), TypeTask.SUBTASK, "20.03.2025 11:00", 1);
-        manager.addSubtask(subtask1);
-        LocalDateTime endTime = subtask1.getEndTime();
+        Subtask subtaskFirst = new Subtask("subtask1", "subtask1subtask1", manager.getNewId(), StatusTask.NEW, epic.getId(), TypeTask.SUBTASK, "20.03.2025 11:00", 1);
+
+        manager.addSubtask(subtaskFirst);
+        LocalDateTime endTime = subtaskFirst.getEndTime();
         LocalDateTime expectedEndTime = LocalDateTime.of(2025, 3, 20, 11, 1);
-        Assertions.assertEquals(expectedEndTime, endTime);
+
+        assertEquals(expectedEndTime, endTime);
     }
 
     @Test
+    @DisplayName("Должен вернуть ID Эпика к которому принадлежит подзадача, подзадача без Эпика не может существовать")
     public void returnIdEpic(){
-        Subtask subtask1 = new Subtask("subtask1", "subtask1subtask1", manager.getNewId(), StatusTask.NEW, epic.getId(), TypeTask.SUBTASK, "20.03.2025 11:00", 1);
-        manager.addSubtask(subtask1);
+        Subtask subtaskFirst = new Subtask("subtask1", "subtask1subtask1", manager.getNewId(), StatusTask.NEW, epic.getId(), TypeTask.SUBTASK, "20.03.2025 11:00", 1);
+        manager.addSubtask(subtaskFirst);
 
         int idEpicExpected = epic.getId();
-        int idEpic = subtask1.getIdEpic();
+        int idEpic = subtaskFirst.getIdEpic();
 
-        Assertions.assertEquals(idEpicExpected, idEpic);
+        assertEquals(idEpicExpected, idEpic);
     }
 }

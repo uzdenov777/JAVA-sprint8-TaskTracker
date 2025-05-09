@@ -32,11 +32,6 @@ public enum TypeEndpoint {
         String[] requestPath = requestURI.getPath().split("/");
         String[] requestQuery = query.split("&");
 
-        if (requestPath.length < 2) {
-            System.out.println("Неверный URI запроса");
-            return UNKNOWN;
-        }
-
         switch (requestMethod) {
             case "GET":
                 return returnGetEndpoint(requestPath, requestQuery);
